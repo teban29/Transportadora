@@ -1,0 +1,39 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Logística{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>Logística</h2>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="{% url 'home' %}">Inicio</a></li>
+                <li><a href="">Registro de Mercancía</a></li>
+                <li><a href="">Historial de Ingresos</a></li>
+                <li><a href="">Gestión de Despachos</a></li>
+                <li><a href="">Estados de Envíos</a></li>
+            
+                <form action="{% url 'logout' %}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="logout-btn" value="Cerrar Sesión">
+                </form>
+            </ul>
+        </div>
+        
+        <!-- Main content -->
+        <div class="main-content">
+            {% block content %}
+            <!-- Aquí va el contenido dinámico de cada vista -->
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

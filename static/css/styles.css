@@ -1,0 +1,122 @@
+body {
+    margin: 0;
+    font-family: 'Roboto', Arial, sans-serif; /* Fuente moderna */
+    background-color: #f8f9fa; /* Color más claro para el fondo */
+    color: #333; /* Color de texto más definido */
+}
+
+.container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar styles */
+.sidebar {
+    width: 250px;
+    background-color: #2c3e50; /* Fondo oscuro */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1); /* Sombra para darle profundidad */
+}
+
+.sidebar-header {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #34495e;
+    padding-bottom: 10px;
+    color: #ecf0f1;
+    text-transform: uppercase; /* Texto en mayúsculas */
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.sidebar-menu li {
+    margin: 15px 0;
+}
+
+.sidebar-menu a {
+    text-decoration: none;
+    color: white;
+    font-size: 16px;
+    display: block;
+    padding: 12px 20px;
+    border-radius: 8px; /* Bordes más redondeados */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Transición suave */
+    font-weight: 500;
+}
+
+.sidebar-menu a:hover {
+    background-color: #1abc9c; /* Color destacado en hover */
+    transform: translateX(5px); /* Pequeño desplazamiento en hover */
+}
+
+.logout-btn {
+    background-color: #e74c3c; /* Rojo para resaltar */
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px; /* Bordes más redondeados */
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Transición suave */
+    width: 100%; /* Botón ocupa todo el ancho */
+    text-align: center;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b; /* Color más oscuro en hover */
+    transform: scale(1.05); /* Ligero efecto de zoom */
+}
+
+/* Main content styles */
+.main-content {
+    flex-grow: 1;
+    padding: 30px;
+    background-color: #f4f4f9; /* Fondo más claro */
+    overflow-y: auto;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05); /* Sombra interna para efecto elegante */
+}
+
+.main-content h1,
+.main-content p {
+    margin-bottom: 20px;
+    color: #2c3e50; /* Texto oscuro */
+}
+
+.main-content h1 {
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.main-content p {
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+/* Responsiveness */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 200px; /* Sidebar más pequeña en pantallas pequeñas */
+    }
+
+    .sidebar-menu a {
+        font-size: 14px;
+        padding: 10px 15px; /* Reducir espacio en enlaces */
+    }
+
+    .logout-btn {
+        font-size: 14px;
+        padding: 10px 15px;
+    }
+}
