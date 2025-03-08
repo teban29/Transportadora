@@ -1,3 +1,4 @@
+
 {% load static %}
 <!DOCTYPE html>
 <html lang="en">
@@ -12,14 +13,17 @@
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="sidebar-header">
-                <h2>Logística</h2>
+                <h2>Transportadora TC</h2>
             </div>
             <ul class="sidebar-menu">
                 <li><a href="{% url 'home' %}">Inicio</a></li>
-                <li><a href="">Registro de Mercancía</a></li>
+                <li><a href="{%  url 'index' %}">Clientes</a></li>
                 <li><a href="">Historial de Ingresos</a></li>
                 <li><a href="">Gestión de Despachos</a></li>
-                <li><a href="">Estados de Envíos</a></li>
+                {% if user.is_staff %}
+                    <li><a href="">Usuarios</a></li>
+                    <li><a href="">Gestión de Clientes</a></li>
+                {% endif %}
             
                 <form action="{% url 'logout' %}" method="post">
                     {% csrf_token %}

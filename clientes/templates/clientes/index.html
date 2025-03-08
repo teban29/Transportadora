@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}Clientes{% endblock %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% block content %}
+<h1>Clientes</h1><hr>
+
+<a href="" class="btn-primary">Crear nuevo cliente</a>
+<table class="table">
+    <thead>
+        <th>Nombre</th>
+        <th>Email</th>
+        <th>Telefono</th>
+        <th>Ciudad</th>
+        <th>Direccion</th>
+        <th>Fecha de creación</th>
+    </tr>
+    {% for cliente in clientes %}
+    <tr>
+        <td>{{ cliente.nombre }}</td>
+        <td>{{ cliente.email }}</td>
+        <td>{{ cliente.telefono }}</td>
+        <td>{{ cliente.ciudad }}</td>
+        <td>{{ cliente.direccion }}</td>
+        <td>{{ cliente.fecha_creacion|date:"d/m/Y" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}
