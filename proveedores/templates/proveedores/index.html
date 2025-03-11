@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}Proveedores{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<h1>Proveedores</h1><hr>
+
+<a href="{% url 'crear_proveedor' %}" class="btn-primary">Crear proveedor</a>
+<table class="table">
+    <thead>
+        <th>Nombre</th>
+        <th>Fecha de creación</th>
+    </tr>
+    {% for proveedor in proveedores %}
+    <tr>
+        <td>{{ proveedor.nombre }}</td>
+        <td>{{ proveedor.fecha_creacion|date:"d/m/Y" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+{% endblock %}

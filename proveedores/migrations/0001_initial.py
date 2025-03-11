@@ -8,22 +8,15 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('proveedores', '0001_initial'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='Cliente',
+            name='Proveedor',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('nit', models.CharField(default='', max_length=255, unique=True)),
                 ('nombre', models.CharField(max_length=255)),
-                ('email', models.EmailField(max_length=254)),
-                ('telefono', models.CharField(max_length=15)),
-                ('ciudad', models.CharField(max_length=255)),
-                ('direccion', models.TextField()),
                 ('fecha_creacion', models.DateTimeField(auto_now_add=True)),
-                ('proveedores', models.ManyToManyField(blank=True, related_name='clientes', to='proveedores.proveedor')),
             ],
         ),
     ]

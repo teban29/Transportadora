@@ -1,7 +1,6 @@
-
 {% load static %}
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,35 +8,36 @@
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 </head>
 <body>
-    <div class="container">
+    <div class="layout">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2>Transportadora TC</h2>
+        <aside class="sidebar">
+            <div class="sidebar__header">
+                <h2 class="sidebar__title">Transportadora TC</h2>
             </div>
-            <ul class="sidebar-menu">
-                <li><a href="{% url 'home' %}">Inicio</a></li>
-                <li><a href="{%  url 'index' %}">Clientes</a></li>
-                <li><a href="">Historial de Ingresos</a></li>
-                <li><a href="">Gestión de Despachos</a></li>
-                {% if user.is_staff %}
-                    <li><a href="">Usuarios</a></li>
-                    <li><a href="">Gestión de Clientes</a></li>
-                {% endif %}
-            
-                <form action="{% url 'logout' %}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" class="logout-btn" value="Cerrar Sesión">
-                </form>
-            </ul>
-        </div>
-        
-        <!-- Main content -->
-        <div class="main-content">
+            <nav class="sidebar__nav">
+                <ul class="sidebar__menu">
+                    <li class="sidebar__item"><a href="{% url 'home' %}" class="sidebar__link">Inicio</a></li>
+                    <li class="sidebar__item"><a href="{% url 'clientes' %}" class="sidebar__link">Clientes</a></li>
+                    <li class="sidebar__item"><a href="{% url 'proveedores' %}" class="sidebar__link">Proveedores</a></li>
+                    <li class="sidebar__item"><a href="#" class="sidebar__link">Historial de Ingresos</a></li>
+                    <li class="sidebar__item"><a href="#" class="sidebar__link">Gestión de Despachos</a></li>
+                    {% if user.is_staff %}
+                        <li class="sidebar__item"><a href="#" class="sidebar__link">Usuarios</a></li>
+                        <li class="sidebar__item"><a href="#" class="sidebar__link">Gestión de Clientes</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+            <form action="{% url 'logout' %}" method="post" class="sidebar__logout">
+                {% csrf_token %}
+                <button type="submit" class="sidebar__logout-btn">Cerrar Sesión</button>
+            </form>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
             {% block content %}
-            <!-- Aquí va el contenido dinámico de cada vista -->
             {% endblock %}
-        </div>
+        </main>
     </div>
 </body>
 </html>

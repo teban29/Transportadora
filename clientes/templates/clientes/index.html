@@ -1,30 +1,41 @@
 {% extends 'base.html' %}
 
+{% block title %}Clientes - Logística{% endblock %}
 {% load static %}
-{% block title %}Clientes{% endblock %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
 {% block content %}
-<h1>Clientes</h1><hr>
+<main class="clientes">
+    <header class="clientes__header">
+        <h1 class="clientes__title">Clientes</h1>
+        <a href="{% url 'crear_cliente' %}" class="btn btn--success">Crear Cliente</a>
+    </header>
 
-<a href="" class="btn-primary">Crear nuevo cliente</a>
-<table class="table">
-    <thead>
-        <th>Nombre</th>
-        <th>Email</th>
-        <th>Telefono</th>
-        <th>Ciudad</th>
-        <th>Direccion</th>
-        <th>Fecha de creación</th>
-    </tr>
-    {% for cliente in clientes %}
-    <tr>
-        <td>{{ cliente.nombre }}</td>
-        <td>{{ cliente.email }}</td>
-        <td>{{ cliente.telefono }}</td>
-        <td>{{ cliente.ciudad }}</td>
-        <td>{{ cliente.direccion }}</td>
-        <td>{{ cliente.fecha_creacion|date:"d/m/Y" }}</td>
-    </tr>
-    {% endfor %}
-    </tbody>
+    <hr class="divider">
+
+    <section class="clientes__list">
+        {% if clientes %}
+            <div class="card-grid">
+                {% for cliente in clientes %}
+                    <article class="card">
+                        <div class="card__body">
+                            <h2 class="card__title">{{ cliente.nombre }}</h2>
+                            <p class="card__text"><strong>Ciudad:</strong> {{ cliente.ciudad }}</p>
+                            <p class="card__text"><strong>Teléfono:</strong> {{ cliente.telefono }}</p>
+                            <p class="card__text"><strong>Email:</strong> {{ cliente.email }}</p>
+                            <div class="card__actions">
+                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn--primary">Editar</a>
+                                <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn--danger" onclick="return ConfirmDelete()">Eliminar</a>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-clients">
+                <p class="no-clients__message">No hay clientes registrados.</p>
+            </div>
+        {% endif %}
+    </section>
+</main>
+<script src="{% static 'js/scripts.js' %}"></script>
+
 {% endblock %}
