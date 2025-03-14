@@ -1,15 +1,14 @@
 {% extends 'base.html' %}
 
-{% load static %}
 {% block title %}Editar cliente{% endblock %}
 {% block content %}
-
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
 <h1>Editar cliente</h1><hr>
 
+<!-- clientes/editar_cliente.html -->
 <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
-    <button type="submit" class="btn-primary">Editar</button>
+    <button type="submit">Guardar Cambios</button>
 </form>
+<a href="{% url 'clientes' %}">Cancelar</a>
 {% endblock %}

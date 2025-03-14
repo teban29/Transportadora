@@ -214,6 +214,11 @@ body {
     padding: 1.5rem;
 }
 
+.card__body a {
+    text-decoration: none;
+    
+}
+
 .card__title {
     font-size: 1.5rem;
     color: var(--color-primary);
@@ -245,4 +250,362 @@ body {
 .no-clients__message {
     font-size: 1.2rem;
     color: var(--color-text-light);
+}
+
+/* Estilos generales para el formulario */
+.form {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: var(--color-white);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    font-size: 1.5rem;
+}
+
+/* Estilos para los campos de entrada */
+.form-group input,
+.form-group select {
+    width: 80%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-white);
+    transition: border-color 0.3s ease;
+}
+
+.form-group select {
+    width: 100%;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--color-secondary);
+    outline: none;
+}
+
+/* Estilos para el selector de proveedores */
+.form-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%232c3e50' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+/* Estilos para los campos dinámicos de productos */
+#productos-container {
+    margin-bottom: 1.5rem;
+}
+
+.producto-form {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: var(--color-white);
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.producto-form .form-group {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.producto-form .form-group input {
+    background-color: var(--color-white);
+}
+
+.producto-form .eliminar-producto {
+    margin-top: 0;
+    width: auto;
+    padding: 10px 20px;
+}
+
+/* Estilos para los botones */
+.btn {
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border: none;
+}
+
+.btn--primary {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+}
+
+.btn--primary:hover {
+    background-color: #1a252f;
+}
+
+.btn--success {
+    background-color: var(--color-success);
+    color: var(--color-white);
+}
+
+.btn--success:hover {
+    background-color: #218838;
+}
+
+.btn--danger {
+    background-color: var(--color-danger);
+    color: var(--color-white);
+}
+
+.btn--danger:hover {
+    background-color: #c82333;
+}
+
+/* Estilos para el botón "Añadir Producto" */
+#añadir-producto {
+    margin-bottom: 1.5rem;
+    width: 100%;
+}
+
+/* Estilos para el título y el header */
+.clientes__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.clientes__title {
+    font-size: 1.8rem;
+    color: var(--color-primary);
+    margin: 0;
+}
+
+/* Estilos para el divisor */
+.divider {
+    border: none;
+    height: 1px;
+    background-color: #ddd;
+    margin: 1.5rem 0;
+}
+
+/* Estilos para los contenedores de carga */
+.cargas__list {
+    display: block;
+    margin-top: 1.5rem;
+}
+
+.carga-card {
+    background-color: var(--color-white);
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    margin: 1rem 0;
+
+}
+
+.carga-card a {
+    text-decoration: none;
+}
+
+.carga-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.carga-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.carga-card__title {
+    font-size: 1.2rem;
+    color: var(--color-primary);
+    margin: 0;
+}
+
+.carga-card__fecha {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin: 0;
+}
+
+.carga-card__proveedor {
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+    margin-bottom: 0.5rem;
+}
+
+/* Estilos para los filtros */
+.filtros {
+    margin-bottom: 2rem;
+}
+
+.filtros-form {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filtro-group {
+    flex: 1;
+    min-width: 200px;
+}
+
+.filtro-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-text-light);
+}
+
+.filtro-group select,
+.filtro-group input {
+    width: 90%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-white);
+    transition: border-color 0.3s ease;
+}
+
+.filtro-group select:focus,
+.filtro-group input:focus {
+    border-color: var(--color-secondary);
+    outline: none;
+}
+
+/* Estilos para el formulario de creación de clientes */
+.crear-cliente {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background-color: var(--color-white);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.crear-cliente h1 {
+    font-size: 2rem;
+    color: var(--color-primary);
+    margin-bottom: 1.5rem;
+}
+
+.crear-cliente hr {
+    border: none;
+    height: 1px;
+    background-color: #ddd;
+    margin: 1.5rem 0;
+}
+
+.crear-cliente .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.crear-cliente .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    color: var(--color-primary);
+    font-size: 0.9rem;
+}
+
+.crear-cliente .form-group input,
+.crear-cliente .form-group select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-white);
+    transition: border-color 0.3s ease;
+}
+
+.crear-cliente .form-group input:focus,
+.crear-cliente .form-group select:focus {
+    border-color: var(--color-secondary);
+    outline: none;
+}
+
+.crear-cliente .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.crear-cliente .btn-primary:hover {
+    background-color: #1a252f;
+}
+
+/* Estilos para el campo de selección de proveedores */
+.proveedores-container {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.proveedores-disponibles,
+.proveedores-seleccionados {
+    flex: 1;
+    background-color: var(--color-bg);
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #ddd;
+}
+
+.proveedores-disponibles h3,
+.proveedores-seleccionados h3 {
+    font-size: 1rem;
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.proveedores-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.proveedores-list li {
+    padding: 10px;
+    background-color: var(--color-white);
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    cursor: grab;
+    transition: background-color 0.3s ease;
+}
+
+.proveedores-list li:hover {
+    background-color: #f1f1f1;
 }

@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'main',
     'clientes',
     'proveedores',
+    'cargas',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

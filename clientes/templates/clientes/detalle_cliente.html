@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{{cliente.nombre}}{% endblock %}
+
+{% block content %}
+<main class="content">
+    <div class="clientes">
+        <header class="clientes__header">
+            <h1 class="clientes__title">{{ cliente.nombre }}</h1>
+            <div>
+                <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success">Registrar Carga</a>
+                <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
+            </div>
+        </header>
+        <hr class="divider">
+
+        <!-- Filtros y búsqueda (lo implementaremos después) -->
+        <div class="filtros">
+            <div class="filtros">
+                <form method="get" class="filtros-form">
+                    <!-- Filtro por orden de registro -->
+                    <div class="filtro-group">
+                        <label for="orden">Ordenar por:</label>
+                        <select name="orden" id="orden">
+                            <option value="reciente">Más recientes primero</option>
+                            <option value="antiguo">Más antiguos primero</option>
+                        </select>
+                    </div>
+            
+                    <!-- Filtro por fecha -->
+                    <div class="filtro-group">
+                        <label for="fecha">Filtrar por fecha:</label>
+                        <input type="date" name="fecha" id="fecha">
+                    </div>
+            
+                    <!-- Barra de búsqueda -->
+                    <div class="filtro-group">
+                        <label for="buscar">Buscar carga:</label>
+                        <input type="text" name="buscar" id="buscar" placeholder="Nombre de la carga">
+                    </div>
+            
+                    <!-- Botón para aplicar filtros -->
+                    <button type="submit" class="btn btn--primary">Aplicar Filtros</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de cargas -->
+        <section class="cargas__list">
+            {% if cargas %}
+                {% for carga in cargas %}
+                    <div class="carga-card">
+                        <div class="carga-card__header">
+                            <a href="{% url 'detalle_carga' carga.id %}">
+                                <h2 class="carga-card__title">{{ carga.nombre }}</h2>
+                            </a>
+                            <p class="carga-card__fecha">{{ carga.fecha|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <p class="carga-card__proveedor">Proveedor: {{ carga.proveedor.nombre }}</p>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-cargas">
+                    <p class="no-cargas__message">No hay cargas registradas.</p>
+                </div>
+            {% endif %}
+        </section>
+    </div>
+</main>
+{% endblock %}

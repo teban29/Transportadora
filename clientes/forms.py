@@ -14,7 +14,3 @@ class ClienteForm(forms.ModelForm):
         model = Cliente
         fields = ['nit', 'nombre', 'email', 'telefono', 'ciudad', 'direccion', 'proveedores']
 
-class ClienteFormEditar(forms.ModelForm):
-    class Meta:
-        model = Cliente
-        fields = ['nit', 'nombre', 'email', 'telefono', 'ciudad', 'direccion']

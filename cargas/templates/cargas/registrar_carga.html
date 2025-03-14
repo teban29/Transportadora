@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Registrar Carga{% endblock %}
+
+{% block content %}
+<main class="content">
+    <div class="clientes">
+        <header class="clientes__header">
+            <h1 class="clientes__title">{{ cliente.nombre }}</h1>
+            <div>
+                <a href="{% url 'detalle_cliente' cliente.nombre %}" class="btn btn--primary">Volver</a>
+            </div>
+        </header>
+        <hr class="divider">
+        
+        <form method="post" class="">
+            {% csrf_token %}
+            
+            <!-- Formulario de carga -->
+            <div class="form-group">
+                <h2>Proveedor</h2>
+                {{ carga_form.proveedor }}
+            </div>
+            
+            <hr class="divider">    
+            <!-- Campos dinámicos para productos -->
+            <h2>Productos</h2>
+            <div id="productos-container">
+                <div class="producto-form card">
+                    <div class="form-group">
+                        <input type="text" name="nombre" placeholder="Nombre del producto" required>
+                    </div>
+                    <div class="form-group">
+                        <input type="number" name="cantidad" placeholder="Cantidad" min="1" required>
+                    </div>
+                    <button type="button" class="btn btn--danger eliminar-producto">Eliminar</button>
+                </div>      
+            </div>
+            
+            <!-- Botón para agregar más productos -->
+            <button type="button" id="añadir-producto" class="btn btn--success">Añadir Producto</button>
+            
+            <!-- Botón para enviar el formulario -->
+            <button type="submit" class="btn btn--primary">Registrar Carga</button>
+        </form>
+    </div>
+</main> 
+
+<!-- JavaScript para manejar campos dinámicos -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productosContainer = document.getElementById('productos-container');
+        const añadirProductoButton = document.getElementById('añadir-producto');
+        
+        // Función para añadir un nuevo campo de producto
+        añadirProductoButton.addEventListener('click', function() {
+            const nuevoProducto = document.querySelector('.producto-form').cloneNode(true);
+            nuevoProducto.querySelectorAll('input').forEach(input => input.value = '');  // Limpiar campos
+            productosContainer.appendChild(nuevoProducto);
+        });
+        
+        // Función para eliminar un campo de producto
+        productosContainer.addEventListener('click', function(event) {
+            if (event.target.classList.contains('eliminar-producto')) {
+                event.target.parentElement.remove();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,3 +1,4 @@
+
 {% extends 'base.html' %}
 
 {% block title %}Clientes - Logística{% endblock %}
@@ -6,7 +7,9 @@
 <main class="clientes">
     <header class="clientes__header">
         <h1 class="clientes__title">Clientes</h1>
-        <a href="{% url 'crear_cliente' %}" class="btn btn--success">Crear Cliente</a>
+        {% if user.is_staff %}
+            <a href="{% url 'crear_cliente' %}" class="btn btn--success">Crear Cliente</a>
+        {% endif %}
     </header>
 
     <hr class="divider">
@@ -17,14 +20,18 @@
                 {% for cliente in clientes %}
                     <article class="card">
                         <div class="card__body">
-                            <h2 class="card__title">{{ cliente.nombre }}</h2>
+                            <a href="{% url 'detalle_cliente' cliente.nombre %}">
+                                <h1 class="card__title">{{ cliente.nombre }}</h1>
+                            </a>
                             <p class="card__text"><strong>Ciudad:</strong> {{ cliente.ciudad }}</p>
                             <p class="card__text"><strong>Teléfono:</strong> {{ cliente.telefono }}</p>
                             <p class="card__text"><strong>Email:</strong> {{ cliente.email }}</p>
-                            <div class="card__actions">
-                                <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn--primary">Editar</a>
-                                <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn--danger" onclick="return ConfirmDelete()">Eliminar</a>
-                            </div>
+                            {% if user.is_staff %}
+                                <div class="card__actions">
+                                    <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn--primary">Editar</a>
+                                    <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn--danger" onclick="return ConfirmDelete()">Eliminar</a>
+                                </div>
+                            {% endif %}
                         </div>
                     </article>
                 {% endfor %}

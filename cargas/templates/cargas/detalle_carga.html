@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ carga.nombre }}{% endblock %}
+
+{% block content %}
+<main>
+    <header class="cargas__header">
+        <h1 class="cargas__title">{{ carga.nombre }}</h1>
+        <div>
+            <a href="{% url 'detalle_cliente' carga.cliente.nombre %}" class="btn btn--primary">Volver al Cliente</a>
+        </div>
+    </header>
+    <hr class="divider">
+    <section class="carga__details">
+        <p><strong>Cliente:</strong> {{ carga.cliente.nombre }}</p>
+        <p><strong>Proveedor:</strong> {{ carga.proveedor.nombre }}</p>
+        <p><strong>Fecha:</strong> {{ carga.fecha }}</p>
+        <p><strong>Observaciones:</strong> {{ carga.observaciones }}</p>
+    </section>
+    <section class="inventario__list">
+        <h2>Inventario de la Carga</h2>
+        {% if inventario %}
+            <ul>
+                {% for item in inventario %}
+                    <li>{{ item.cantidad }} x {{ item.producto.nombre }}</li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>No hay productos registrados en esta carga.</p>
+        {% endif %}
+    </section>
+</main>
+{% endblock %}

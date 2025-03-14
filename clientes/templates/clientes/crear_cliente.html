@@ -3,13 +3,99 @@
 {% load static %}
 {% block title %}Crear cliente{% endblock %}
 {% block content %}
-
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<h1>Crear cliente</h1><hr>
+<div class="crear-cliente">
+    <h1>Crear cliente</h1>
+    <hr>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn-primary">Crear</button>
-</form>
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Campos del formulario -->
+        <div class="form-group">
+            {{ form.nit.label_tag }}
+            {{ form.nit }}
+        </div>
+        <div class="form-group">
+            {{ form.nombre.label_tag }}
+            {{ form.nombre }}
+        </div>
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+        </div>
+        <div class="form-group">
+            {{ form.telefono.label_tag }}
+            {{ form.telefono }}
+        </div>
+        <div class="form-group">
+            {{ form.ciudad.label_tag }}
+            {{ form.ciudad }}
+        </div>
+        <div class="form-group">
+            {{ form.direccion.label_tag }}
+            {{ form.direccion }}
+        </div>
+
+        <!-- Campo de selección de proveedores -->
+        <div class="form-group">
+            <label for="proveedores">Seleccionar proveedores:</label>
+            <div class="proveedores-container">
+                <div class="proveedores-disponibles">
+                    <h3>Proveedores disponibles</h3>
+                    <ul id="proveedores-disponibles" class="proveedores-list">
+                        {% for proveedor in proveedores %}
+                            <li data-id="{{ proveedor.id }}">{{ proveedor.nombre }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="proveedores-seleccionados">
+                    <h3>Proveedores seleccionados</h3>
+                    <ul id="proveedores-seleccionados" class="proveedores-list"></ul>
+                </div>
+            </div>
+            <input type="hidden" name="proveedores" id="proveedores-seleccionados-input">
+        </div>
+
+        <button type="submit" class="btn-primary">Crear</button>
+    </form>
+</div>
+
+<!-- JavaScript para el arrastre de proveedores -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Inicializar SortableJS para los proveedores disponibles
+        const proveedoresDisponibles = document.getElementById('proveedores-disponibles');
+        const proveedoresSeleccionados = document.getElementById('proveedores-seleccionados');
+        const proveedoresSeleccionadosInput = document.getElementById('proveedores-seleccionados-input');
+
+        new Sortable(proveedoresDisponibles, {
+            group: {
+                name: 'proveedores',
+                pull: 'clone',
+                put: false,
+            },
+            sort: false,
+            onEnd: function(evt) {
+                actualizarProveedoresSeleccionados();
+            },
+        });
+
+        new Sortable(proveedoresSeleccionados, {
+            group: 'proveedores',
+            onEnd: function(evt) {
+                actualizarProveedoresSeleccionados();
+            },
+        });
+
+        // Función para actualizar el campo oculto con los proveedores seleccionados
+        function actualizarProveedoresSeleccionados() {
+            const proveedores = Array.from(proveedoresSeleccionados.children).map(li => li.getAttribute('data-id'));
+            proveedoresSeleccionadosInput.value = proveedores.join(',');
+        }
+    });
+</script>
+
+
 {% endblock %}
