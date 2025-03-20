@@ -499,14 +499,41 @@ body {
     outline: none;
 }
 
+/* Estilos para el selector múltiple de proveedores */
+.proveedores-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    background-color: var(--color-white);
+    font-size: 0.9rem;
+    color: var(--color-text);
+    transition: border-color 0.3s ease;
+}
+
+.proveedores-select:focus {
+    border-color: var(--color-secondary);
+    outline: none;
+}
+
+.proveedores-select option {
+    padding: 10px;
+    background-color: var(--color-white);
+    color: var(--color-text);
+}
+
+.proveedores-select option:hover {
+    background-color: var(--color-secondary);
+    color: var(--color-white);
+}
+
 /* Estilos para el formulario de creación de clientes */
 .crear-cliente {
-    max-width: 800px;
+
     margin: 0 auto;
     padding: 2rem;
     background-color: var(--color-white);
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
 }
 
 .crear-cliente h1 {
@@ -522,11 +549,18 @@ body {
     margin: 1.5rem 0;
 }
 
-.crear-cliente .form-group {
+/* Diseño de dos columnas para los campos del formulario */
+.form-columns {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.form-group {
     margin-bottom: 1.5rem;
 }
 
-.crear-cliente .form-group label {
+.form-group label {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: bold;
@@ -534,8 +568,8 @@ body {
     font-size: 0.9rem;
 }
 
-.crear-cliente .form-group input,
-.crear-cliente .form-group select {
+.form-group input,
+.form-group select {
     width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
@@ -546,13 +580,14 @@ body {
     transition: border-color 0.3s ease;
 }
 
-.crear-cliente .form-group input:focus,
-.crear-cliente .form-group select:focus {
+.form-group input:focus,
+.form-group select:focus {
     border-color: var(--color-secondary);
     outline: none;
 }
 
-.crear-cliente .btn-primary {
+/* Estilos para el botón de enviar */
+.btn-primary {
     background-color: var(--color-primary);
     color: var(--color-white);
     padding: 10px 20px;
@@ -563,49 +598,38 @@ body {
     transition: background-color 0.3s ease;
 }
 
-.crear-cliente .btn-primary:hover {
+.btn-primary:hover {
     background-color: #1a252f;
 }
 
-/* Estilos para el campo de selección de proveedores */
-.proveedores-container {
+/* Estilos para los campos de proveedores dinámicos */
+.proveedor-form {
     display: flex;
-    gap: 1.5rem;
-    margin-top: 1rem;
-}
-
-.proveedores-disponibles,
-.proveedores-seleccionados {
-    flex: 1;
-    background-color: var(--color-bg);
-    padding: 1rem;
-    border-radius: 6px;
-    border: 1px solid #ddd;
-}
-
-.proveedores-disponibles h3,
-.proveedores-seleccionados h3 {
-    font-size: 1rem;
-    color: var(--color-primary);
+    gap: 1rem;
     margin-bottom: 1rem;
+    padding: 1rem;
 }
 
-.proveedores-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+.proveedor-form .form-group {
+    flex: 1;
 }
 
-.proveedores-list li {
+.proveedor-select {
+    width: 100%;
     padding: 10px;
-    background-color: var(--color-white);
     border: 1px solid #ddd;
     border-radius: 6px;
-    margin-bottom: 0.5rem;
-    cursor: grab;
-    transition: background-color 0.3s ease;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-white);
+    transition: border-color 0.3s ease;
 }
 
-.proveedores-list li:hover {
-    background-color: #f1f1f1;
+.proveedor-select:focus {
+    border-color: var(--color-secondary);
+    outline: none;
+}
+
+.eliminar-proveedor {
+    margin-bottom: 0.5rem;
 }

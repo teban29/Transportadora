@@ -5,7 +5,7 @@ from proveedores.models import Proveedor
 class CargaForm(forms.ModelForm):
     class Meta:
         model = Carga
-        fields = ['proveedor']
+        fields = ['proveedor','archivo_factura']
 
     def __init__(self, *args, **kwargs):
         cliente = kwargs.pop('cliente', None)

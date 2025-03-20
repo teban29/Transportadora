@@ -40,6 +40,11 @@
             <!-- Botón para agregar más productos -->
             <button type="button" id="añadir-producto" class="btn btn--success">Añadir Producto</button>
             
+            <div class="form-group">
+                {{ carga_form.archivo_factura.label_tag }}
+                {{ carga_form.archivo_factura }}
+            </div>
+
             <!-- Botón para enviar el formulario -->
             <button type="submit" class="btn btn--primary">Registrar Carga</button>
         </form>

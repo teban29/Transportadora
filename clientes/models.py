@@ -9,7 +9,7 @@ class Cliente(models.Model):
     email = models.EmailField()
     telefono = models.CharField(max_length=15)
     ciudad = models.CharField(max_length=255)
-    direccion = models.TextField()
+    direccion = models.CharField(max_length=255)
     proveedores = models.ManyToManyField(Proveedor, related_name="clientes", blank=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     

@@ -17,10 +17,9 @@ def crear_cliente(request):
         if form.is_valid():
             cliente = form.save()
             
-            # Asignar proveedores seleccionados al cliente
-            proveedores_seleccionados = request.POST.get('proveedores', '').split(',')
-            proveedores_seleccionados = [int(id) for id in proveedores_seleccionados if id]
-            cliente.proveedores.set(proveedores_seleccionados)
+            # Obtener todos los proveedores seleccionados
+            proveedores_seleccionados = request.POST.getlist('proveedores[]')  # Usar getlist para múltiples valores
+            cliente.proveedores.set(proveedores_seleccionados)  # Asignar los proveedores al cliente
             
             return redirect('clientes')
     else:
@@ -33,6 +32,7 @@ def crear_cliente(request):
         'form': form,
         'proveedores': proveedores,
     })
+    
 
 def editar_cliente(request,id):
     cliente = Cliente.objects.get(id=id)

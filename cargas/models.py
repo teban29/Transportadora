@@ -20,6 +20,7 @@ class Carga(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.CASCADE, related_name='cargas')
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='cargas')
     fecha = models.DateTimeField(auto_now_add=True)
+    archivo_factura = models.FileField(upload_to='facturas/', blank=True, null=True)
     
     def __str__(self):
         return f"{self.nombre}"
