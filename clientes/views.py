@@ -31,22 +31,28 @@ def crear_cliente(request):
     return render(request, 'clientes/crear_cliente.html', {
         'form': form,
         'proveedores': proveedores,
-    })
+    })          
     
 
-def editar_cliente(request,id):
-    cliente = Cliente.objects.get(id=id)
+def editar_cliente(request, id):
+    cliente = get_object_or_404(Cliente, id=id)
+    proveedores = Proveedor.objects.all()
+    
     if request.method == 'POST':
         form = ClienteForm(request.POST, instance=cliente)
         if form.is_valid():
             cliente = form.save()
+            proveedores_seleccionados = request.POST.getlist('proveedores[]')
+            cliente.proveedores.set(proveedores_seleccionados)
             return redirect('clientes')
-        
     else:
         form = ClienteForm(instance=cliente)
-            
-    return render(request, 'clientes/editar_cliente.html', {'form':form})
     
+    return render(request, 'clientes/editar_cliente.html', {
+        'form': form,
+        'cliente': cliente,
+        'proveedores': proveedores,
+    })
 
 def detalle_cliente(request, nombre):
     cliente = get_object_or_404(Cliente, nombre=nombre)

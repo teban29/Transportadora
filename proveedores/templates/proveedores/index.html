@@ -1,22 +1,47 @@
+
 {% extends 'base.html' %}
 
+{% block title %}Clientes - Logística{% endblock %}
 {% load static %}
-{% block title %}Proveedores{% endblock %}
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<h1>Proveedores</h1><hr>
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Proveedores</h1>
+        {% if user.is_staff %}
+            <a href="{% url 'crear_proveedor' %}" class="btn btn--success">Crear Proveedor</a>
+        {% endif %}
+    </header>
 
-<a href="{% url 'crear_proveedor' %}" class="btn-primary">Crear proveedor</a>
-<table class="table">
-    <thead>
-        <th>Nombre</th>
-        <th>Fecha de creación</th>
-    </tr>
-    {% for proveedor in proveedores %}
-    <tr>
-        <td>{{ proveedor.nombre }}</td>
-        <td>{{ proveedor.fecha_creacion|date:"d/m/Y" }}</td>
-    </tr>
-    {% endfor %}
-    </tbody>
+    <hr class="divider">
+
+    <section class="objects__list">
+        {% if proveedores %}
+            <div class="card-grid">
+                {% for proveedor in proveedores %}
+                    <article class="card">
+                        <div class="card__body">
+                            <a href="{% url 'detalle_proveedor' proveedor.nombre %}"></a>
+                                <h1 class="card__title">{{ proveedor.nombre }}</h1>
+                            </a>
+                            <p class="card__text"><strong>Contacto:</strong> {{ proveedor.contacto }}</p>
+
+                            {% if user.is_staff %}
+                                <div class="card__actions">
+                                    <a href="{% url 'editar_proveedor' proveedor.nombre %}" class="btn btn--primary">Editar</a>
+                                    <a href="{% url 'eliminar_proveedor' proveedor.id %}" class="btn btn--danger" onclick="return ConfirmDeleteProveedor()">Eliminar</a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="no-clients">
+                <p class="no-clients__message">No hay proveedores registrados.</p>
+            </div>
+        {% endif %}
+    </section>
+</main>
+<script src="{% static 'js/scripts.js' %}"></script>
+
 {% endblock %}

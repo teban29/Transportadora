@@ -5,9 +5,15 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<div class="crear-cliente">
-    <h1>Crear cliente</h1>
-    <hr>
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Crear cliente</h1>
+        <div>
+            <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
+        </div>
+    </header>
+
+    <hr class="divider">
 
     <form method="post">
         {% csrf_token %}
@@ -63,9 +69,7 @@
         <button type="submit" class="btn btn--primary">Crear</button>
         <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
     </form>
-</div>
-
-<!-- JavaScript para manejar campos dinámicos -->
+</main>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const proveedoresContainer = document.getElementById('proveedores-container');

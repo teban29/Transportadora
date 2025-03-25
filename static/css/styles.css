@@ -161,20 +161,20 @@ body {
     background-color: #218838;
 }
 
-/* Estilos específicos para la página de clientes */
-.clientes {
+/* estilos para el contenido principal */
+.main-content {
     margin: 0 auto;
     padding: 20px;
 }
 
-.clientes__header {
+.content__header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 1.5rem;
 }
 
-.clientes__title {
+.content__title {   
     font-size: 2rem;
     color: var(--color-primary);
     margin: 0;
@@ -187,7 +187,7 @@ body {
     margin: 1.5rem 0;
 }
 
-.clientes__list {
+.objects__list {
     margin-top: 20px;
 }
 
@@ -197,26 +197,12 @@ body {
     gap: 1.5rem;
 }
 
-.card {
-    background-color: var(--color-white);
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 8px var(--color-shadow);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 12px var(--color-shadow);
-}
-
 .card__body {
     padding: 1.5rem;
 }
 
 .card__body a {
     text-decoration: none;
-    
 }
 
 .card__title {
@@ -275,9 +261,8 @@ body {
 }
 
 /* Estilos para los campos de entrada */
-.form-group input,
 .form-group select {
-    width: 80%;
+    width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -285,20 +270,6 @@ body {
     color: var(--color-text);
     background-color: var(--color-white);
     transition: border-color 0.3s ease;
-}
-
-.form-group select {
-    width: 100%;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-    border-color: var(--color-secondary);
-    outline: none;
-}
-
-/* Estilos para el selector de proveedores */
-.form-group select {
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
@@ -306,6 +277,12 @@ body {
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 12px;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--color-secondary);
+    outline: none;
 }
 
 /* Estilos para los campos dinámicos de productos */
@@ -327,10 +304,6 @@ body {
 .producto-form .form-group {
     margin-bottom: 0;
     flex: 1;
-}
-
-.producto-form .form-group input {
-    background-color: var(--color-white);
 }
 
 .producto-form .eliminar-producto {
@@ -384,28 +357,6 @@ body {
     width: 100%;
 }
 
-/* Estilos para el título y el header */
-.clientes__header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.5rem;
-}
-
-.clientes__title {
-    font-size: 1.8rem;
-    color: var(--color-primary);
-    margin: 0;
-}
-
-/* Estilos para el divisor */
-.divider {
-    border: none;
-    height: 1px;
-    background-color: #ddd;
-    margin: 1.5rem 0;
-}
-
 /* Estilos para los contenedores de carga */
 .cargas__list {
     display: block;
@@ -420,7 +371,6 @@ body {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     margin: 1rem 0;
-
 }
 
 .carga-card a {
@@ -529,11 +479,9 @@ body {
 
 /* Estilos para el formulario de creación de clientes */
 .crear-cliente {
-
     margin: 0 auto;
     padding: 2rem;
     background-color: var(--color-white);
-
 }
 
 .crear-cliente h1 {
@@ -556,21 +504,9 @@ body {
     gap: 1.5rem;
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-    color: var(--color-primary);
-    font-size: 0.9rem;
-}
-
 .form-group input,
 .form-group select {
-    width: 100%;
+    width: 90%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 6px;
@@ -578,6 +514,15 @@ body {
     color: var(--color-text);
     background-color: var(--color-white);
     transition: border-color 0.3s ease;
+}
+
+
+
+#id_observacion{
+    width: 100%;
+    height: 100px;
+    resize: none;
+    padding: 0.5rem;
 }
 
 .form-group input:focus,
@@ -632,4 +577,22 @@ body {
 
 .eliminar-proveedor {
     margin-bottom: 0.5rem;
+}   
+
+/* Ajustes específicos para la página de proveedores */
+.proveedores .card {
+    min-height: 200px; /* Altura mínima para consistencia */
+    display: flex;
+    flex-direction: column;
+}
+
+.proveedores .card__body {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.proveedores .card__actions {
+    margin-top: auto; /* Empuja los botones hacia abajo */
+    padding-top: 1rem;
 }

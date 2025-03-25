@@ -3,10 +3,9 @@
 {% block title %}{{cliente.nombre}}{% endblock %}
 
 {% block content %}
-<main class="content">
-    <div class="clientes">
-        <header class="clientes__header">
-            <h1 class="clientes__title">{{ cliente.nombre }}</h1>
+<main class="main-content">
+        <header class="content__header">
+            <h1 class="content__title">{{ cliente.nombre }}</h1>
             <div>
                 <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success">Registrar Carga</a>
                 <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
@@ -65,6 +64,5 @@
                 </div>
             {% endif %}
         </section>
-    </div>
 </main>
 {% endblock %}

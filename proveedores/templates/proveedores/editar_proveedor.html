@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+
+{% block title %}Editar proveedor{% endblock %}
+{% block content %}
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Editar proveedor</h1>
+        <div>
+            <a href="{% url 'proveedores' %}" class="btn btn--primary">Volver</a>
+        </div>
+    </header>
+
+    <hr class="divider">
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn-primary">Editar</button>
+    </form>
+
+</main>
+{% endblock %}

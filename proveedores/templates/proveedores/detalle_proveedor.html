@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ proveedor.nombre }}{% endblock %}
+
+{% block content %}
+<main>
+    <header class="proveedores__header">
+        <h1 class="proveedores__title">{{ proveedor.nombre }}</h1>
+    </header>
+    <hr class="divider">
+    <section class="proveedor__details">        
+        <p><strong>NIT:</strong> {{ proveedor.nit }}</p>
+        <p><strong>Nombre:</strong> {{ proveedor.nombre }}</p>
+        <p><strong>Contacto:</strong> {{ proveedor.contacto }}</p>
+        <p><strong>Fecha de Creación:</strong> {{ proveedor.fecha_creacion }}</p>
+    </section>
+</main>
+{% endblock %}  

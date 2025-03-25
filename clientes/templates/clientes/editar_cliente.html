@@ -2,13 +2,139 @@
 
 {% block title %}Editar cliente{% endblock %}
 {% block content %}
-<h1>Editar cliente</h1><hr>
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Editar cliente</h1>
+        <div>
+            <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
+        </div>
+    </header>
 
-<!-- clientes/editar_cliente.html -->
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar Cambios</button>
-</form>
-<a href="{% url 'clientes' %}">Cancelar</a>
+    <hr class="divider">
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Campos del formulario en dos columnas -->
+        <div class="form-columns">
+            <div class="form-group">
+                {{ form.nit.label_tag }}
+                {{ form.nit }}
+            </div>
+            <div class="form-group">
+                {{ form.nombre.label_tag }}
+                {{ form.nombre }}
+            </div>
+            <div class="form-group">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+            </div>
+            <div class="form-group">
+                {{ form.telefono.label_tag }}
+                {{ form.telefono }}
+            </div>
+            <div class="form-group">
+                {{ form.ciudad.label_tag }}
+                {{ form.ciudad }}
+            </div>
+            <div class="form-group">
+                {{ form.direccion.label_tag }}
+                {{ form.direccion }}
+            </div>
+        </div>
+
+        <!-- Campo de selección de proveedores -->
+        <div class="form-group">
+            <label for="proveedores">Seleccionar proveedores:</label>
+            <div id="proveedores-container">
+                {% for proveedor in cliente.proveedores.all %}
+                <div class="proveedor-form card">
+                    <div class="form-group">
+                        <select name="proveedores[]" class="proveedor-select" required>
+                            <option value="" disabled>Seleccione un proveedor</option>
+                            {% for p in proveedores %}
+                                <option value="{{ p.id }}" {% if p.id == proveedor.id %}selected{% endif %}>{{ p.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn--danger eliminar-proveedor">Eliminar</button>
+                </div>
+                {% empty %}
+                <div class="proveedor-form card">
+                    <div class="form-group">
+                        <select name="proveedores[]" class="proveedor-select" required>
+                            <option value="" disabled selected>Seleccione un proveedor</option>
+                            {% for p in proveedores %}
+                                <option value="{{ p.id }}">{{ p.nombre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="button" class="btn btn--danger eliminar-proveedor">Eliminar</button>
+                </div>
+                {% endfor %}
+            </div>
+            <!-- Botón para agregar más proveedores -->
+            <button type="button" id="añadir-proveedor" class="btn btn--success">Añadir Proveedor</button>
+        </div>
+        <button type="submit" class="btn btn--primary">Guardar cambios</button>
+        <a href="{% url 'clientes' %}" class="btn btn--danger">Cancelar</a>
+    </form>
+</main>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const proveedoresContainer = document.getElementById('proveedores-container');
+        const añadirProveedorButton = document.getElementById('añadir-proveedor');
+        
+        // Función para actualizar las opciones de los selectores
+        function actualizarOpciones() {
+            const selects = document.querySelectorAll('.proveedor-select');
+            const proveedoresSeleccionados = new Set();
+
+            // Obtener todos los proveedores seleccionados
+            selects.forEach(select => {
+                if (select.value) {
+                    proveedoresSeleccionados.add(select.value);
+                }
+            });
+
+            // Actualizar las opciones de cada selector
+            selects.forEach(select => {
+                Array.from(select.options).forEach(option => {
+                    if (option.value && proveedoresSeleccionados.has(option.value) && !option.selected) {
+                        option.style.display = 'none';
+                    } else {
+                        option.style.display = 'block';
+                    }
+                });
+            });
+        }
+
+        // Función para añadir un nuevo campo de proveedor
+        añadirProveedorButton.addEventListener('click', function() {
+            const nuevoProveedor = document.querySelector('.proveedor-form').cloneNode(true);
+            const select = nuevoProveedor.querySelector('.proveedor-select');
+            select.selectedIndex = 0;
+            select.addEventListener('change', actualizarOpciones);
+            proveedoresContainer.appendChild(nuevoProveedor);
+            actualizarOpciones();
+        });
+        
+        // Función para eliminar un campo de proveedor
+        proveedoresContainer.addEventListener('click', function(event) {
+            if (event.target.classList.contains('eliminar-proveedor')) {
+                event.target.parentElement.remove();
+                actualizarOpciones();
+            }
+        });
+
+        // Inicializar eventos
+        document.querySelectorAll('.proveedor-select').forEach(select => {
+            select.addEventListener('change', actualizarOpciones);
+        });
+        
+        // Ejecutar al cargar la página
+        actualizarOpciones();
+    });
+</script>
 {% endblock %}

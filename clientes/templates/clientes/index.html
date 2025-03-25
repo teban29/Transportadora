@@ -4,9 +4,9 @@
 {% block title %}Clientes - Logística{% endblock %}
 {% load static %}
 {% block content %}
-<main class="clientes">
-    <header class="clientes__header">
-        <h1 class="clientes__title">Clientes</h1>
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Clientes</h1>
         {% if user.is_staff %}
             <a href="{% url 'crear_cliente' %}" class="btn btn--success">Crear Cliente</a>
         {% endif %}
@@ -14,7 +14,7 @@
 
     <hr class="divider">
 
-    <section class="clientes__list">
+    <section class="objects__list">
         {% if clientes %}
             <div class="card-grid">
                 {% for cliente in clientes %}
@@ -29,7 +29,7 @@
                             {% if user.is_staff %}
                                 <div class="card__actions">
                                     <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn--primary">Editar</a>
-                                    <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn--danger" onclick="return ConfirmDelete()">Eliminar</a>
+                                    <a href="{% url 'eliminar_cliente' cliente.id %}" class="btn btn--danger" onclick="return ConfirmDeleteCliente()">Eliminar</a>
                                 </div>
                             {% endif %}
                         </div>
