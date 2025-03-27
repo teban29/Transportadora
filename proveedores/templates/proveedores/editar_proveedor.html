@@ -14,9 +14,24 @@
 
     <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn-primary">Editar</button>
-    </form>
-
+        
+        <!-- Campos del formulario en dos columnas -->
+        <div class="form-columns">
+            <div class="form-group">
+                {{ form.nit.label_tag }}
+                {{ form.nit }}
+            </div>
+            <div class="form-group">
+                {{ form.nombre.label_tag }}
+                {{ form.nombre }}
+            </div>
+            <div class="form-group">
+                {{ form.contacto.label_tag }}
+                {{ form.contacto }}
+            </div>
+        </div>  
+        <button type="submit" class="btn btn--primary">Guardar cambios</button>
+        <a href="{% url 'proveedores' %}" class="btn btn--danger">Cancelar</a>
+    </form> 
 </main>
 {% endblock %}

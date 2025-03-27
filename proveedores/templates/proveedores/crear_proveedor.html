@@ -1,14 +1,37 @@
 {% extends 'base.html' %}
 
-{% load static %}
 {% block title %}Crear proveedor{% endblock %}
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<h1>Crear proveedor</h1><hr>
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Crear proveedor</h1>
+        <div>
+            <a href="{% url 'proveedores' %}" class="btn btn--primary">Volver</a>
+        </div>
+    </header>
 
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit" class="btn-primary">Crear</button>
-</form>
+    <hr class="divider">
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Campos del formulario en dos columnas -->
+        <div class="form-columns">
+            <div class="form-group">
+                {{ form.nit.label_tag }}
+                {{ form.nit }}
+            </div>
+            <div class="form-group">
+                {{ form.nombre.label_tag }}
+                {{ form.nombre }}
+            </div>
+            <div class="form-group">
+                {{ form.contacto.label_tag }}
+                {{ form.contacto }}
+            </div>
+        </div>
+        <button type="submit" class="btn btn--primary">Crear</button>
+        <a href="{% url 'proveedores' %}" class="btn btn--primary">Volver</a>
+    </form>
+</main>
 {% endblock %}

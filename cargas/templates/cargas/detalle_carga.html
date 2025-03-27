@@ -10,26 +10,38 @@
             <a href="{% url 'detalle_cliente' carga.cliente.nombre %}" class="btn btn--primary">Volver al Cliente</a>
         </div>
     </header>
-
     <hr class="divider">
-
-    <section class="carga__details">        
+    
+    <section class="carga__details">  
+        <p><strong>Factura:</strong> {{ carga.archivo_factura }}</p>
         <p><strong>Cliente:</strong> {{ carga.cliente.nombre }}</p>
         <p><strong>Proveedor:</strong> {{ carga.proveedor.nombre }}</p>
         <p><strong>Remision:</strong> {{ carga.remision }}</p>
         <p><strong>Fecha:</strong> {{ carga.fecha|date:"d/m/Y - P" }}</p>
         <p><strong>Observaciones:</strong> {{ carga.observaciones }}</p>
     </section>
-    <section class="inventario__list">
-        <h2>Inventario de la Carga</h2>
+    <hr class="divider">
+
+    <section class="cargas__list">
         {% if inventario %}
-            <ul>
-                {% for item in inventario %}
-                    <li>{{ item.cantidad }} x {{ item.producto.nombre }}</li>
-                {% endfor %}
-            </ul>
+            {% for item in inventario %}
+                <div class="carga-card">
+                    <div class="carga-card__header">
+                            <h2 class="carga-card__title">{{ item.producto.nombre }}</h2>
+                        <p class="carga-card__fecha"><strong>Cantidad:</strong> {{ item.cantidad }}</p>
+                    </div>
+                    <a href="{% url 'generar_codigo_barras_producto' item.id %}" 
+                       class="btn btn-primary" 
+                       target="_blank"
+                       onclick="window.open(this.href, '_blank', 'width=800,height=600'); return false;">
+                       <i class="fas fa-barcode"></i> Generar Código Único
+                    </a>
+                </div>
+            {% endfor %}
         {% else %}
-            <p>No hay productos registrados en esta carga.</p>
+            <div class="no-cargas">
+                <p class="no-cargas__message">No hay productos registrados en esta carga.</p>
+            </div>
         {% endif %}
     </section>
 </main>

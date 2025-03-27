@@ -41,6 +41,7 @@ class InventarioCarga(models.Model):
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name='inventario')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField()
+    codigo_barras = models.ImageField(upload_to='codigos_barras/', blank=True, null=False)
     
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} (CARGA:{self.carga.id})"
