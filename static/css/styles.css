@@ -596,3 +596,126 @@ body {
     margin-top: auto; /* Empuja los botones hacia abajo */
     padding-top: 1rem;
 }
+
+/* Estilos para las tarjetas de producto */
+.product-card {
+    background-color: var(--color-white);
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+    border-color: var(--color-secondary);
+}
+
+.product-card__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.product-card__title {
+    font-size: 1.1rem;
+    color: var(--color-primary);
+    margin: 0;
+    flex: 1;
+    min-width: 200px;
+}
+
+.product-card__text {
+    font-size: 0.95rem;
+    color: var(--color-text-light);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.product-card__text::before {
+    content: "•";
+    color: var(--color-secondary);
+    font-weight: bold;
+    margin-right: 0.3rem;
+}
+
+/* Estilos para el botón de impresión */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.9rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.btn-primary:hover {
+    background-color: #1a252f;
+}
+
+.btn-primary i {
+    font-size: 0.9rem;
+}
+
+/* Estado cuando no hay productos */
+.no-cargas {
+    background-color: var(--color-white);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin: 1rem 0;
+}
+
+.no-cargas__message {
+    color: var(--color-text-light);
+    font-size: 1rem;
+    margin: 0;
+}
+
+.factura-link {
+    color: #1a73e8;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.3s;
+}
+.factura-link:hover {
+    color: #0d47a1;
+    text-decoration: underline;
+}
+.factura-link i {
+    margin-right: 5px;
+}
+
+#remision-status {
+    font-size: 0.8rem;
+    font-weight: normal;
+}
+#remision-status .text-danger {
+    color: #dc3545;
+}
+#remision-status .text-success {
+    color: #28a745;
+}
+#remision-help a {
+    color: #dc3545;
+    text-decoration: underline;
+}
+.fa-spinner {
+    color: #6c757d;
+}
+

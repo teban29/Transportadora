@@ -1,19 +1,41 @@
 {% extends 'base.html' %}
 
 {% block title %}Registrar Carga{% endblock %}
-
+<style>
+    #remision-status {
+        font-size: 0.8em;
+        margin-left: 10px;
+    }
+    .fa-check-circle {
+        color: #28a745;
+    }
+    .fa-exclamation-circle {
+        color: #dc3545;
+    }
+    .fa-spinner {
+        color: #6c757d;
+    }
+    #remision-help {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.8em;
+        color: #6c757d;
+    }
+    #remision-help a {
+        color: #dc3545;
+    }
+</style>
 {% block content %}
-<main class="content">
-    <div class="clientes">
-        <header class="clientes__header">
-            <h1 class="clientes__title">{{ cliente.nombre }}</h1>
+<main class="main-content">        
+        <header class="content__header">
+            <h1 class="content__title">{{ cliente.nombre }}</h1>
             <div>
                 <a href="{% url 'detalle_cliente' cliente.nombre %}" class="btn btn--primary">Volver</a>
             </div>
         </header>
         <hr class="divider">
         
-        <form method="post" class="">
+        <form method="post" enctype="multipart/form-data" class="" id="carga-form">
             {% csrf_token %}
             
             <!-- Formulario de carga -->
@@ -23,18 +45,13 @@
             </div>
 
             <div class="form-group">
-                <h2>Remision</h2>
+                <h2>Remisión <span id="remision-status"></span></h2>
                 {{ carga_form.remision }}
+                <small id="remision-help">Número único de remisión</small>
             </div>
-
-            
-            <div class="form-group">
-                <h2>Observación</h2>
-                {{ carga_form.observacion }}
-            </div>
-            
             
             <hr class="divider">    
+            
             <!-- Campos dinámicos para productos -->
             <h2>Productos</h2>
             <div id="productos-container">
@@ -58,30 +75,76 @@
             </div>
 
             <!-- Botón para enviar el formulario -->
-            <button type="submit" class="btn btn--primary">Registrar Carga</button>
+            <button type="submit" class="btn btn--primary" id="submit-btn">Registrar Carga</button>
         </form>
     </div>
 </main> 
 
-<!-- JavaScript para manejar campos dinámicos -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        const remisionInput = document.getElementById('id_remision');
+        const remisionStatus = document.getElementById('remision-status');
+        const remisionHelp = document.getElementById('remision-help');
+        let remisionCheckTimeout = null;
+        
+        if (remisionInput && remisionStatus) {
+            remisionInput.addEventListener('input', function() {
+                clearTimeout(remisionCheckTimeout);
+                
+                const remisionValue = this.value.trim();
+                
+                if (remisionValue.length > 0) {
+                    remisionStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                    remisionHelp.textContent = 'Verificando...';
+                    
+                    remisionCheckTimeout = setTimeout(() => {
+                        fetch(`/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}`)
+                            .then(response => {
+                                if (!response.ok) throw new Error('Error en la verificación');
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (data.exists) {
+                                    remisionStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                                    remisionHelp.innerHTML = `Esta remisión ya existe. <a href="${data.existing_url}" target="_blank">Ver carga</a>`;
+                                } else {
+                                    remisionStatus.innerHTML = '<i class="fas fa-check-circle"></i>';
+                                    remisionHelp.textContent = 'Remisión disponible';
+                                }
+                            })
+                            .catch(error => {
+                                console.error('Error:', error);
+                                remisionStatus.innerHTML = '';
+                                remisionHelp.textContent = 'Error al verificar remisión';
+                            });
+                    }, 800);
+                } else {
+                    remisionStatus.innerHTML = '';
+                    remisionHelp.textContent = 'Número único de remisión';
+                }
+            });
+        }
+
+
+        // Mantener tus otros event listeners para productos
         const productosContainer = document.getElementById('productos-container');
         const añadirProductoButton = document.getElementById('añadir-producto');
         
-        // Función para añadir un nuevo campo de producto
         añadirProductoButton.addEventListener('click', function() {
             const nuevoProducto = document.querySelector('.producto-form').cloneNode(true);
-            nuevoProducto.querySelectorAll('input').forEach(input => input.value = '');  // Limpiar campos
+            nuevoProducto.querySelectorAll('input').forEach(input => input.value = '');
             productosContainer.appendChild(nuevoProducto);
         });
         
-        // Función para eliminar un campo de producto
         productosContainer.addEventListener('click', function(event) {
             if (event.target.classList.contains('eliminar-producto')) {
-                event.target.parentElement.remove();
+                if (document.querySelectorAll('.producto-form').length > 1) {
+                    event.target.parentElement.remove();
+                } else {
+                    alert('Debe haber al menos un producto en la carga');
+                }
             }
         });
     });
-</script>
+    </script>
 {% endblock %}

@@ -13,36 +13,56 @@
     <hr class="divider">
     
     <section class="carga__details">  
-        <p><strong>Factura:</strong> {{ carga.archivo_factura }}</p>
+        <p><strong>Factura:</strong> 
+            {% if carga.archivo_factura %}
+                <a href="{{ carga.archivo_factura.url }}" 
+                   target="_blank" 
+                   class="factura-link">
+                   <i class="fas fa-file-pdf"></i> Ver Factura ({{ carga.archivo_factura.name|slice:"-10:" }})
+                </a>
+            {% else %}
+                <span class="text-muted">No hay factura cargada</span>
+            {% endif %}
+        </p>
         <p><strong>Cliente:</strong> {{ carga.cliente.nombre }}</p>
         <p><strong>Proveedor:</strong> {{ carga.proveedor.nombre }}</p>
         <p><strong>Remision:</strong> {{ carga.remision }}</p>
         <p><strong>Fecha:</strong> {{ carga.fecha|date:"d/m/Y - P" }}</p>
-        <p><strong>Observaciones:</strong> {{ carga.observaciones }}</p>
+        <p><strong>Observaciones:</strong> {{ carga.observacion }}</p>
     </section>
     <hr class="divider">
 
     <section class="cargas__list">
         {% if inventario %}
+        <div class="product-grid">
             {% for item in inventario %}
-                <div class="carga-card">
-                    <div class="carga-card__header">
-                            <h2 class="carga-card__title">{{ item.producto.nombre }}</h2>
-                        <p class="carga-card__fecha"><strong>Cantidad:</strong> {{ item.cantidad }}</p>
+                <div class="product-card">
+                    <div class="product-card__header">
+                        <h3 class="product-card__title">{{ item.producto.nombre }}</h3>
+                        <a href="{% url 'generar_codigo_barras_producto' item.id %}" 
+                           class="btn btn-primary" 
+                           target="_blank"
+                           onclick="window.open(this.href, '_blank', 'width=800,height=600'); return false;">
+                           <i class="fas fa-barcode"></i> <span class="btn-text">Imprimir Código</span>
+                        </a>
                     </div>
-                    <a href="{% url 'generar_codigo_barras_producto' item.id %}" 
-                       class="btn btn-primary" 
-                       target="_blank"
-                       onclick="window.open(this.href, '_blank', 'width=800,height=600'); return false;">
-                       <i class="fas fa-barcode"></i> Generar Código Único
-                    </a>
+                    <div class="product-card__meta">
+                        <p class="product-card__text">{{ item.cantidad }} unidades</p>
+                        {% if item.producto.codigo %}
+                        <p class="product-card__code">
+                            <i class="fas fa-hashtag"></i> {{ item.producto.codigo }}
+                        </p>
+                        {% endif %}
+                    </div>
                 </div>
             {% endfor %}
-        {% else %}
-            <div class="no-cargas">
-                <p class="no-cargas__message">No hay productos registrados en esta carga.</p>
-            </div>
-        {% endif %}
+        </div>
+    {% else %}
+        <div class="no-cargas">
+            <i class="no-cargas__icon fas fa-box-open"></i>
+            <p class="no-cargas__message">No hay productos registrados en esta carga.</p>
+        </div>
+    {% endif %} 
     </section>
 </main>
 {% endblock %}

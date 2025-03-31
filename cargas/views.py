@@ -1,42 +1,67 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+from django.urls import reverse
+from django.contrib import messages
+from django.db import IntegrityError
+from django.http import HttpResponse, JsonResponse
 from .models import Carga, InventarioCarga, Producto
 from .forms import CargaForm
 from .utils import generar_codigo_barras_unico
 from clientes.models import Cliente
 
-
-
-# Create your views here.
+def verificar_remision(request):
+    remision = request.GET.get('remision', '')
+    if not remision:
+        return JsonResponse({'error': 'No se proporcionó remisión'}, status=400)
+    
+    carga_existente = Carga.objects.filter(remision=remision).first()
+    
+    if carga_existente:
+        return JsonResponse({
+            'exists': True,
+            'existing_url': reverse('detalle_carga', args=[carga_existente.id])
+        })
+    return JsonResponse({'exists': False})
 
 def registrar_carga(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
     
     if request.method == 'POST':
-        carga_form = CargaForm(request.POST, cliente=cliente)
+        carga_form = CargaForm(request.POST, request.FILES, cliente=cliente)
         
-        if carga_form.is_valid():
-            # Guardar la carga
-            carga = carga_form.save(commit=False)
-            carga.cliente = cliente
-            carga.save()
-            
-            # Procesar los productos
-            productos = zip(
-                request.POST.getlist('nombre'),
-                request.POST.getlist('cantidad')
-            )
-            
-            for nombre, cantidad in productos:
-                if nombre and cantidad:  # Ignorar campos vacíos
-                    producto, created = Producto.objects.get_or_create(nombre=nombre)
-                    InventarioCarga.objects.create(
-                        carga=carga,
-                        producto=producto,
-                        cantidad=cantidad
+        try:
+            if carga_form.is_valid():
+                remision = carga_form.cleaned_data.get('remision')
+                
+                # Verificación explícita de remisión duplicada
+                if Carga.objects.filter(remision=remision).exists():
+                    carga_existente = Carga.objects.get(remision=remision)
+                    messages.error(
+                        request,
+                        f'❌ Error: La remisión {remision} ya está registrada en la carga {carga_existente.nombre}',
+                        extra_tags='danger'
                     )
-            
-            return redirect('detalle_cliente', nombre=cliente.nombre)
+                    return render(request, 'cargas/registrar_carga.html', {
+                        'carga_form': carga_form,
+                        'cliente': cliente,
+                    })
+                
+                # Si la remisión es única, proceder con el registro
+                carga = carga_form.save(commit=False)
+                carga.cliente = cliente
+                carga.save()
+                
+                # Procesar productos...
+                
+                messages.success(request, '✅ Carga registrada exitosamente!')
+                return redirect('detalle_cliente', nombre=cliente.nombre)
+                
+        except IntegrityError as e:
+            messages.error(
+                request,
+                '❌ Error crítico al registrar la carga. Por favor intente nuevamente.',
+                extra_tags='danger'
+            )
+    
     else:
         carga_form = CargaForm(cliente=cliente)
     
@@ -44,7 +69,6 @@ def registrar_carga(request, cliente_id):
         'carga_form': carga_form,
         'cliente': cliente,
     })
-    
     
 def detalle_carga(request, carga_id):
     carga = get_object_or_404(Carga, id=carga_id)  # Usar get() para obtener una única carga
@@ -66,3 +90,4 @@ def generar_codigo_barras_producto(request, inventario_id):
         return response
     except Exception as e:
         return HttpResponse(f"Error generando código: {str(e)}", status=500)
+
