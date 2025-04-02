@@ -142,3 +142,18 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #tiempo en el cual expira el token de sesion
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'DEBUG',
+    },
+}

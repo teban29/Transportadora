@@ -103,24 +103,29 @@
                     remisionHelp.textContent = 'Verificando...';
                     
                     remisionCheckTimeout = setTimeout(() => {
-                        fetch(`/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}`)
+                        // URL modificada aquí
+                        fetch(`${window.location.origin}/cargas/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}`)
                             .then(response => {
-                                if (!response.ok) throw new Error('Error en la verificación');
+                                if (!response.ok) {
+                                    throw new Error(`Error HTTP! estado: ${response.status}`);
+                                }
                                 return response.json();
                             })
                             .then(data => {
+                                console.log("Respuesta API:", data);
                                 if (data.exists) {
-                                    remisionStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
-                                    remisionHelp.innerHTML = `Esta remisión ya existe. <a href="${data.existing_url}" target="_blank">Ver carga</a>`;
+                                    remisionStatus.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>';
+                                    remisionHelp.innerHTML = `Esta remisión ya existe. <a href="${data.existing_url}" target="_blank">Ver carga existente</a>`;
                                 } else {
-                                    remisionStatus.innerHTML = '<i class="fas fa-check-circle"></i>';
+                                    remisionStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
                                     remisionHelp.textContent = 'Remisión disponible';
                                 }
                             })
                             .catch(error => {
                                 console.error('Error:', error);
-                                remisionStatus.innerHTML = '';
-                                remisionHelp.textContent = 'Error al verificar remisión';
+                                remisionStatus.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
+                                remisionHelp.innerHTML = `Error al verificar. Intente nuevamente.<br>
+                                    <small class="text-muted">${error.message}</small>`;
                             });
                     }, 800);
                 } else {
@@ -129,8 +134,6 @@
                 }
             });
         }
-
-
         // Mantener tus otros event listeners para productos
         const productosContainer = document.getElementById('productos-container');
         const añadirProductoButton = document.getElementById('añadir-producto');
@@ -151,5 +154,5 @@
             }
         });
     });
-    </script>
+</script>
 {% endblock %}

@@ -1,26 +1,40 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.urls import reverse
 from django.contrib import messages
 from django.db import IntegrityError
-from django.http import HttpResponse, JsonResponse
-from .models import Carga, InventarioCarga, Producto
 from .forms import CargaForm
 from .utils import generar_codigo_barras_unico
 from clientes.models import Cliente
+from .models import Carga, InventarioCarga, Producto
 
+import logging
+from django.urls import reverse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_GET
+
+
+logger = logging.getLogger(__name__)
+
+@require_GET
 def verificar_remision(request):
-    remision = request.GET.get('remision', '')
+    remision = request.GET.get('remision', '').strip()
+    logger.debug(f"Verificando remisión: {remision}")
+    
     if not remision:
-        return JsonResponse({'error': 'No se proporcionó remisión'}, status=400)
+        return JsonResponse({'error': 'Remisión no proporcionada'}, status=400)
     
-    carga_existente = Carga.objects.filter(remision=remision).first()
+    try:
+        carga_existente = Carga.objects.filter(remision=remision).first()
+        response_data = {
+            'exists': carga_existente is not None,
+            'remision': remision,
+            'existing_url': reverse('detalle_carga', args=[carga_existente.id]) if carga_existente else '',
+        }
+        return JsonResponse(response_data)
     
-    if carga_existente:
-        return JsonResponse({
-            'exists': True,
-            'existing_url': reverse('detalle_carga', args=[carga_existente.id])
-        })
-    return JsonResponse({'exists': False})
+    except Exception as e:
+        logger.error(f"Error verificando remisión: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)
 
 def registrar_carga(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
