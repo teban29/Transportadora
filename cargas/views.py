@@ -32,7 +32,7 @@ def registrar_carga(request, cliente_id):
             if carga_form.is_valid():
                 remision = carga_form.cleaned_data.get('remision')
                 
-                # Verificación explícita de remisión duplicada
+                # Verificación de remisión duplicada
                 if Carga.objects.filter(remision=remision).exists():
                     carga_existente = Carga.objects.get(remision=remision)
                     messages.error(
@@ -45,15 +45,28 @@ def registrar_carga(request, cliente_id):
                         'cliente': cliente,
                     })
                 
-                # Si la remisión es única, proceder con el registro
+                # Guardar la carga
                 carga = carga_form.save(commit=False)
                 carga.cliente = cliente
                 carga.save()
                 
-                # Procesar productos...
+                # Procesar productos - CORRECCIÓN CLAVE AQUÍ
+                nombres_productos = request.POST.getlist('nombre')
+                cantidades_productos = request.POST.getlist('cantidad')
+                
+                for nombre, cantidad in zip(nombres_productos, cantidades_productos):
+                    if nombre and cantidad:  # Solo si ambos campos tienen valores
+                        # Crear o obtener el producto
+                        producto, created = Producto.objects.get_or_create(nombre=nombre)
+                        # Crear relación en InventarioCarga
+                        InventarioCarga.objects.create(
+                            carga=carga,
+                            producto=producto,
+                            cantidad=cantidad
+                        )
                 
                 messages.success(request, '✅ Carga registrada exitosamente!')
-                return redirect('detalle_cliente', nombre=cliente.nombre)
+                return redirect('detalle_carga', carga_id=carga.id)
                 
         except IntegrityError as e:
             messages.error(
@@ -61,6 +74,8 @@ def registrar_carga(request, cliente_id):
                 '❌ Error crítico al registrar la carga. Por favor intente nuevamente.',
                 extra_tags='danger'
             )
+            # Opcional: Log del error para debugging
+            print(f"Error de integridad: {str(e)}")
     
     else:
         carga_form = CargaForm(cliente=cliente)
@@ -69,6 +84,7 @@ def registrar_carga(request, cliente_id):
         'carga_form': carga_form,
         'cliente': cliente,
     })
+
     
 def detalle_carga(request, carga_id):
     carga = get_object_or_404(Carga, id=carga_id)  # Usar get() para obtener una única carga
