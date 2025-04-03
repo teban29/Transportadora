@@ -121,3 +121,20 @@ def generar_codigo_barras_producto(request, inventario_id):
     except Exception as e:
         return HttpResponse(f"Error generando código: {str(e)}", status=500)
 
+
+@require_GET
+def verificar_inventario_disponible(request):
+    """ Verificar si el inventario de la carga está disponible para el despacho """
+    
+    inventario_id = request.GET.get('inventario_id')
+    cantidad_requerida = int(request.GET.get('cantidad', 0))
+    
+    inventario = get_object_or_404(InventarioCarga, id=inventario_id)
+    disponible = inventario.cantidad_disponible()
+    
+    return JsonResponse({
+        'disponible': disponible,
+        'suficiente': disponible >= cantidad_requerida,
+        'producto': inventario.producto.nombre,
+        'carga' : inventario.carga.nombre,
+        })

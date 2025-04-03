@@ -1,0 +1,244 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}Crear Despacho - {{ cliente.nombre }}{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Crear Despacho para {{ cliente.nombre }}</h1>
+        <a href="{% url 'lista_despachos_cliente' cliente.nombre %}" class="btn btn--primary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </header>
+
+    <hr class="divider">
+
+    <section class="content__body">
+        <div class="card">
+            <div class="card__body">
+                <form method="post" id="despacho-form">
+                    {% csrf_token %}
+                    
+                    <!-- Información básica del despacho -->
+                    <div class="form-columns">
+                        <div class="form-group">
+                            <label for="{{ despacho_form.valor_flete.id_for_label }}">Valor del Flete</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ despacho_form.valor_flete }}
+                            </div>
+                            {% if despacho_form.valor_flete.errors %}
+                                <div class="error-message">{{ despacho_form.valor_flete.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ despacho_form.observaciones.id_for_label }}">Observaciones</label>
+                        {{ despacho_form.observaciones }}
+                        {% if despacho_form.observaciones.errors %}
+                            <div class="error-message">{{ despacho_form.observaciones.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <hr class="divider">
+                    
+                    <!-- Productos a despachar -->
+                    <h2 class="section-title">Productos a Despachar</h2>
+                    <div id="productos-container">
+                        <!-- Producto inicial -->
+                        <div class="producto-form card" data-index="0">
+                            <div class="form-columns">
+                                <div class="form-group">
+                                    <label>Producto</label>
+                                    <select name="items-0-inventario" class="form-group select producto-select" required>
+                                        <option value="" disabled selected>Seleccione un producto</option>
+                                        {% for inventario in inventarios_disponibles %}
+                                            <option value="{{ inventario.id }}" 
+                                                    data-disponible="{{ inventario.cantidad_disponible }}"
+                                                    data-carga="{{ inventario.carga.nombre }}">
+                                                {{ inventario.producto.nombre }} (Disponible: {{ inventario.cantidad_disponible }})
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <small class="text-muted carga-info"></small>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Cantidad</label>
+                                    <input type="number" name="items-0-cantidad" class="form-control cantidad-input" 
+                                           min="1" required>
+                                    <small class="text-muted disponibilidad-info"></small>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn--danger eliminar-producto" style="display: none;">
+                                <i class="fas fa-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <button type="button" id="añadir-producto" class="btn btn--success">
+                            <i class="fas fa-plus"></i> Añadir Producto
+                        </button>
+                    </div>
+                    
+                    <hr class="divider">
+                    
+                    <div class="form-group">
+                        <button type="submit" class="btn btn--primary">
+                            <i class="fas fa-save"></i> Guardar Despacho
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+</main>
+
+<style>
+    /* Estilos específicos para el formulario de despacho */
+    .section-title {
+        color: var(--color-primary);
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+    }
+    
+    .producto-form {
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+        position: relative;
+    }
+    
+    .producto-form:not(:first-child) .eliminar-producto {
+        display: block !important;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+    }
+    
+    .input-group {
+        display: flex;
+        align-items: center;
+    }
+    
+    .input-group-text {
+        padding: 10px 15px;
+        background-color: #e9ecef;
+        border: 1px solid #ced4da;
+        border-right: none;
+        border-radius: 6px 0 0 6px;
+    }
+    
+    .input-group input {
+        border-radius: 0 6px 6px 0 !important;
+    }
+    
+    .error-message {
+        color: var(--color-danger);
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+    
+    .disponibilidad-info,
+    .carga-info {
+        display: block;
+        margin-top: 5px;
+        font-size: 0.85rem;
+    }
+    
+    .producto-select {
+        width: 100% !important;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Contador para índices de productos
+    let productIndex = 1;
+    
+    // Función para añadir nuevo producto
+    document.getElementById('añadir-producto').addEventListener('click', function() {
+        const container = document.getElementById('productos-container');
+        const firstProduct = container.querySelector('.producto-form');
+        const newProduct = firstProduct.cloneNode(true);
+        
+        // Actualizar índices y limpiar valores
+        newProduct.setAttribute('data-index', productIndex);
+        newProduct.querySelector('.producto-select').name = `items-${productIndex}-inventario`;
+        newProduct.querySelector('.producto-select').selectedIndex = 0;
+        newProduct.querySelector('.cantidad-input').name = `items-${productIndex}-cantidad`;
+        newProduct.querySelector('.cantidad-input').value = '';
+        newProduct.querySelector('.disponibilidad-info').textContent = '';
+        newProduct.querySelector('.carga-info').textContent = '';
+        
+        // Mostrar botón de eliminar
+        newProduct.querySelector('.eliminar-producto').style.display = 'block';
+        
+        container.appendChild(newProduct);
+        productIndex++;
+        
+        // Agregar evento para eliminar producto
+        newProduct.querySelector('.eliminar-producto').addEventListener('click', function() {
+            container.removeChild(newProduct);
+        });
+    });
+    
+    // Evento para mostrar información de disponibilidad al seleccionar producto
+    document.addEventListener('change', function(e) {
+        if (e.target.classList.contains('producto-select')) {
+            const selectedOption = e.target.options[e.target.selectedIndex];
+            const disponible = selectedOption.getAttribute('data-disponible');
+            const carga = selectedOption.getAttribute('data-carga');
+            const productoForm = e.target.closest('.producto-form');
+            
+            productoForm.querySelector('.disponibilidad-info').textContent = `Disponible: ${disponible} unidades`;
+            productoForm.querySelector('.carga-info').textContent = `Carga: ${carga}`;
+            
+            // Establecer máximo en el input de cantidad
+            const cantidadInput = productoForm.querySelector('.cantidad-input');
+            cantidadInput.max = disponible;
+        }
+    });
+    
+    // Validación antes de enviar el formulario
+    document.getElementById('despacho-form').addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Validar que al menos haya un producto
+        const productos = document.querySelectorAll('.producto-form');
+        if (productos.length === 0) {
+            alert('Debe agregar al menos un producto al despacho');
+            isValid = false;
+        }
+        
+        // Validar que las cantidades no excedan el disponible
+        productos.forEach(producto => {
+            const select = producto.querySelector('.producto-select');
+            const cantidadInput = producto.querySelector('.cantidad-input');
+            
+            if (select.selectedIndex <= 0) {
+                alert('Todos los productos deben estar seleccionados');
+                isValid = false;
+                return;
+            }
+            
+            const disponible = parseInt(select.options[select.selectedIndex].getAttribute('data-disponible'));
+            const cantidad = parseInt(cantidadInput.value);
+            
+            if (cantidad > disponible) {
+                alert(`La cantidad para ${select.options[select.selectedIndex].text.split('(')[0]} excede el disponible`);
+                isValid = false;
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+
+{% endblock %}

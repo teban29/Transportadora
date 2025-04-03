@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}Detalle de Despacho {{ despacho.guia }}{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<main class="main-content">
+    <header class="content__header">
+        <div class="header-top">
+            <h1 class="content__title">Despacho: {{ despacho.guia }}</h1>
+            <div class="header-actions">
+                <a href="{% url 'lista_despachos_cliente' despacho.cliente.nombre %}" class="btn btn--primary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
+                {% if despacho.estado != 'ENTREGADO' %}
+                <div class="btn-group">
+                    {% if despacho.estado == 'BODEGA' %}
+                    <a href="{% url 'cambiar_estado_despacho' despacho.pk 'RUTA' %}" class="btn btn--warning">
+                        <i class="fas fa-truck"></i> Marcar como En Ruta
+                    </a>
+                    {% elif despacho.estado == 'RUTA' %}
+                    <a href="{% url 'cambiar_estado_despacho' despacho.pk 'ENTREGADO' %}" class="btn btn--success">
+                        <i class="fas fa-check-circle"></i> Marcar como Entregado
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="despacho-meta">
+            <span class="badge 
+                {% if despacho.estado == 'ENTREGADO' %}bg-success
+                {% elif despacho.estado == 'RUTA' %}bg-warning
+                {% else %}bg-secondary{% endif %}">
+                {{ despacho.get_estado_display }}
+            </span>
+            <span><i class="fas fa-calendar-alt"></i> {{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</span>
+            <span><i class="fas fa-user"></i> {{ despacho.cliente.nombre }}</span>
+        </div>
+    </header>
+
+    <hr class="divider">
+
+    <section class="content__body">
+        <div class="card-grid">
+            <!-- Resumen del despacho -->
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Información del Despacho</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Valor del Flete:</label>
+                            <p>${{ despacho.valor_flete|floatformat:2 }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Guía:</label>
+                            <p>{{ despacho.guia }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Cliente:</label>
+                            <p>{{ despacho.cliente.nombre }}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Fecha de Creación:</label>
+                            <p>{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                    
+                    {% if despacho.observaciones %}
+                    <div class="info-item full-width">
+                        <label>Observaciones:</label>
+                        <p>{{ despacho.observaciones }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Estado actual -->
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Estado Actual</h3>
+                    <div class="status-timeline">
+                        <div class="status-item {% if despacho.estado == 'BODEGA' %}current{% endif %}">
+                            <div class="status-icon">
+                                <i class="fas fa-warehouse"></i>
+                            </div>
+                            <div class="status-info">
+                                <h4>En Bodega</h4>
+                                {% if despacho.estado != 'BODEGA' %}
+                                <small>Preparado para despacho</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="status-item {% if despacho.estado == 'RUTA' %}current{% endif %}">
+                            <div class="status-icon">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="status-info">
+                                <h4>En Ruta</h4>
+                                {% if despacho.estado == 'ENTREGADO' %}
+                                <small>En transporte</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="status-item {% if despacho.estado == 'ENTREGADO' %}current{% endif %}">
+                            <div class="status-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="status-info">
+                                <h4>Entregado</h4>
+                                {% if despacho.estado == 'ENTREGADO' %}
+                                <small>Despacho completado</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Productos del despacho -->
+        <div class="card">
+            <div class="card__body">
+                <h3 class="card__title">Productos Despachados</h3>
+                
+                {% if items %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Carga de Origen</th>
+                                <th>Disponible Actual</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ item.inventario.producto.nombre }}</td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>{{ item.inventario.carga.nombre }}</td>
+                                <td>{{ item.inventario.cantidad_disponible }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="no-items">
+                    <i class="fas fa-box-open fa-2x"></i>
+                    <p>No hay productos registrados en este despacho</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</main>
+
+<style>
+    /* Estilos específicos para el detalle de despacho */
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .header-actions {
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .despacho-meta {
+        display: flex;
+        gap: 1.5rem;
+        align-items: center;
+        margin-top: 1rem;
+        flex-wrap: wrap;
+    }
+    
+    .despacho-meta span {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--color-text-light);
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .info-item {
+        margin-bottom: 1rem;
+    }
+    
+    .info-item label {
+        font-weight: bold;
+        color: var(--color-primary);
+        display: block;
+        margin-bottom: 0.3rem;
+    }
+    
+    .info-item.full-width {
+        grid-column: 1 / -1;
+    }
+    
+    .status-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .status-item {
+        display: flex;
+        gap: 1rem;
+        align-items: center;
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .status-item:not(:last-child):after {
+        content: '';
+        position: absolute;
+        left: 1.2rem;
+        top: 2.5rem;
+        bottom: -1.5rem;
+        width: 2px;
+        background-color: #ddd;
+    }
+    
+    .status-item.current:after {
+        background-color: var(--color-secondary);
+    }
+    
+    .status-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background-color: #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: absolute;
+        left: 0;
+    }
+    
+    .status-item.current .status-icon {
+        background-color: var(--color-secondary);
+        color: white;
+    }
+    
+    .status-info h4 {
+        margin: 0;
+        color: var(--color-primary);
+    }
+    
+    .status-item.current h4 {
+        color: var(--color-secondary);
+    }
+    
+    .status-info small {
+        color: var(--color-text-light);
+        font-size: 0.85rem;
+    }
+    
+    .no-items {
+        text-align: center;
+        padding: 2rem;
+        color: var(--color-text-light);
+    }
+    
+    .no-items i {
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .header-top {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .header-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+        
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación para cambiar estados
+    document.querySelectorAll('[href*="cambiar_estado_despacho"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            const nuevoEstado = this.textContent.trim();
+            if (!confirm(`¿Está seguro de cambiar el estado a "${nuevoEstado}"?`)) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

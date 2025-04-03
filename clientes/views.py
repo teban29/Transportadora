@@ -3,14 +3,17 @@ from .models import Cliente
 from .forms import ClienteForm
 from cargas.models import Carga
 from proveedores.models import Proveedor
+from django.contrib.auth.decorators import login_required
 
 # Create your views here.
 
+@login_required
 def index(request):
     clientes = Cliente.objects.all()
     return render(request, 'clientes/index.html', {'clientes': clientes})
 
 
+@login_required
 def crear_cliente(request):
     if request.method == 'POST':
         form = ClienteForm(request.POST)
@@ -34,6 +37,7 @@ def crear_cliente(request):
     })          
     
 
+@login_required
 def editar_cliente(request, id):
     cliente = get_object_or_404(Cliente, id=id)
     proveedores = Proveedor.objects.all()
@@ -54,6 +58,7 @@ def editar_cliente(request, id):
         'proveedores': proveedores,
     })
 
+@login_required
 def detalle_cliente(request, nombre):
     cliente = get_object_or_404(Cliente, nombre=nombre)
     cargas = Carga.objects.filter(cliente=cliente)
@@ -75,6 +80,7 @@ def detalle_cliente(request, nombre):
     
     return render(request, 'clientes/detalle_cliente.html', {'cliente': cliente, 'cargas':cargas})
 
+@login_required
 def eliminar_cliente(request, id):
     cliente = Cliente.objects.get(id=id)
     cliente.delete()

@@ -1,0 +1,256 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}Despachos{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Despachos</h1>
+    </header>
+
+    <hr class="divider">
+
+    <section class="content__body">
+        <!-- Filtros -->
+        <div class="card filtros">
+            <div class="card__body">
+                <form method="get" class="filtros-form">
+                    <div class="filtro-group">
+                        <label for="clienteFilter">Cliente</label>
+                        <select id="clienteFilter" class="form-group select" onchange="location = this.value;">
+                            <option value="{% url 'lista_despachos' %}">Todos los clientes</option>
+                            {% for c in clientes %}
+                            <option value="{% url 'lista_despachos_cliente' c.nombre %}" 
+                                    {% if cliente and cliente.nombre == c.nombre %}selected{% endif %}>
+                                {{ c.nombre }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filtro-group">
+                        <label for="estadoFilter">Estado</label>
+                        <select id="estadoFilter" class="form-group select" name="estado">
+                            <option value="">Todos los estados</option>
+                            {% for value, label in estados %}
+                            <option value="{{ value }}" {% if request.GET.estado == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="filtro-group">
+                        <button type="submit" class="btn btn--primary">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                        <a href="{% if cliente %}{% url 'lista_despachos_cliente' cliente.nombre %}{% else %}{% url 'lista_despachos' %}{% endif %}" 
+                           class="btn btn--danger">
+                            <i class="fas fa-sync-alt"></i> Limpiar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Resumen -->
+        {% if cliente %}
+        <div class="card-grid">
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Total Despachos</h3>
+                    <p class="card__text">{{ total_despachos }}</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">En Bodega</h3>
+                    <p class="card__text">{{ en_bodega }}</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">En Ruta</h3>
+                    <p class="card__text">{{ en_ruta }}</p>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Entregados</h3>
+                    <p class="card__text">{{ entregados }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Tabla de despachos -->
+        <div class="card">
+            <div class="card__body">
+                <div class="objects__list">
+                    {% if despachos %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Guía</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Estado</th>
+                                <th>Valor Flete</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for despacho in despachos %}
+                            <tr>
+                                <td>
+                                    <strong>{{ despacho.guia }}</strong>
+                                </td>
+                                <td>{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                <td>{{ despacho.cliente.nombre }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if despacho.estado == 'ENTREGADO' %}bg-success
+                                        {% elif despacho.estado == 'RUTA' %}bg-warning
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ despacho.get_estado_display }}
+                                    </span>
+                                </td>
+                                <td>${{ despacho.valor_flete|floatformat:2 }}</td>
+                                <td>
+                                    <div class="card__actions">
+                                        <a href="{% url 'detalle_despacho' despacho.pk %}" 
+                                           class="btn btn--primary" 
+                                           title="Ver detalle">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if despacho.estado == 'BODEGA' %}
+                                        <a href="{% url 'cambiar_estado_despacho' despacho.pk 'RUTA' %}" 
+                                           class="btn btn--warning" 
+                                           title="Marcar como En Ruta">
+                                            <i class="fas fa-truck"></i>
+                                        </a>
+                                        {% elif despacho.estado == 'RUTA' %}
+                                        <a href="{% url 'cambiar_estado_despacho' despacho.pk 'ENTREGADO' %}" 
+                                           class="btn btn--success" 
+                                           title="Marcar como Entregado">
+                                            <i class="fas fa-check-circle"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="no-clients">
+                        <div class="no-clients__message">
+                            <i class="fas fa-box-open fa-2x mb-3"></i>
+                            <p>No se encontraron despachos registrados</p>
+                            {% if cliente %}
+                            <a href="{% url 'crear_despacho' cliente.nombre %}" class="btn btn--primary">
+                                <i class="fas fa-plus"></i> Crear primer despacho
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Paginación -->
+                {% if despachos.has_other_pages %}
+                <div class="pagination">
+                    {% if despachos.has_previous %}
+                    <a href="?page=1" class="btn btn--primary">&laquo;&laquo;</a>
+                    <a href="?page={{ despachos.previous_page_number }}" class="btn btn--primary">&laquo;</a>
+                    {% endif %}
+
+                    {% for num in despachos.paginator.page_range %}
+                        {% if despachos.number == num %}
+                        <a href="#" class="btn btn--primary active">{{ num }}</a>
+                        {% elif num > despachos.number|add:'-3' and num < despachos.number|add:'3' %}
+                        <a href="?page={{ num }}" class="btn btn--primary">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if despachos.has_next %}
+                    <a href="?page={{ despachos.next_page_number }}" class="btn btn--primary">&raquo;</a>
+                    <a href="?page={{ despachos.paginator.num_pages }}" class="btn btn--primary">&raquo;&raquo;</a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+</main>
+
+<style>
+    /* Estilos específicos para despachos */
+    .badge {
+        display: inline-block;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+        font-weight: 700;
+        line-height: 1;
+        color: white;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 0.25rem;
+    }
+    
+    .bg-success { background-color: var(--color-success); }
+    .bg-warning { background-color: #ffc107; color: #000; }
+    .bg-secondary { background-color: var(--color-text-light); }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    
+    .table th {
+        background-color: var(--color-primary);
+        color: white;
+    }
+    
+    .table tr:hover {
+        background-color: #f5f5f5;
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 5px;
+        margin-top: 20px;
+    }
+    
+    .btn--warning {
+        background-color: #ffc107;
+        color: #000;
+    }
+    
+    .btn--warning:hover {
+        background-color: #e0a800;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmación para cambiar estados
+    document.querySelectorAll('[href*="cambiar_estado_despacho"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            if (!confirm('¿Está seguro de cambiar el estado de este despacho?')) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

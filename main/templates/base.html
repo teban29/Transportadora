@@ -114,7 +114,7 @@
                     <li class="sidebar__item"><a href="{% url 'clientes' %}" class="sidebar__link">Clientes</a></li>
                     <li class="sidebar__item"><a href="{% url 'proveedores' %}" class="sidebar__link">Proveedores</a></li>
                     <li class="sidebar__item"><a href="#" class="sidebar__link">Historial de Ingresos</a></li>
-                    <li class="sidebar__item"><a href="#" class="sidebar__link">Gestión de Despachos</a></li>
+                    <li class="sidebar__item"><a href="{% url 'lista_despachos' %}" class="sidebar__link">Gestión de Despachos</a></li>
                     {% if user.is_staff %}
                         <li class="sidebar__item"><a href="#" class="sidebar__link">Usuarios</a></li>
                     {% endif %}

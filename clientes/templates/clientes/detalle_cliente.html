@@ -8,6 +8,7 @@
             <h1 class="content__title">{{ cliente.nombre }}</h1>
             <div>
                 <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success">Registrar Carga</a>
+                <a href="{% url 'crear_despacho' cliente.nombre %}" class="btn btn--success">Crear Despacho</a>
                 <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
             </div>
         </header>

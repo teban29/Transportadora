@@ -43,6 +43,16 @@ class InventarioCarga(models.Model):
     cantidad = models.IntegerField()
     codigo_barras = models.ImageField(upload_to='codigos_barras/', blank=True, null=False)
     
+    @property
+    def cantidad_disponible(self):
+        """Calcula la cantidad disponible considerando despachos"""
+        total_despachado = sum(
+            item.cantidad 
+            for item in self.itemdespacho_set.all()  # Relación inversa automática
+        )
+        return self.cantidad - total_despachado
+    
+    
     def __str__(self):
         return f"{self.cantidad} x {self.producto.nombre} (CARGA:{self.carga.id})"
     

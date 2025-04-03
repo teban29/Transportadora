@@ -11,6 +11,8 @@
     --color-shadow: rgba(0, 0, 0, 0.1);
     --font-primary: 'Roboto', Arial, sans-serif;
     --sidebar-width: 250px;
+    --color-warning: #ffc107;
+    --color-info: #17a2b8;
 }
 
 /* Estilos base */
@@ -422,6 +424,7 @@ body {
 .filtro-group {
     flex: 1;
     min-width: 200px;
+    align-items: center;
 }
 
 .filtro-group label {
@@ -719,3 +722,25 @@ body {
     color: #6c757d;
 }
 
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+}
+
+.table th, .table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.table th {
+    background-color: var(--color-primary);
+    color: white;
+    position: sticky;
+    top: 0;
+}
+
+.table tr:hover {
+    background-color: rgba(26, 188, 156, 0.1);
+}
