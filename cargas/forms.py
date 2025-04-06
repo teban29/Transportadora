@@ -6,9 +6,9 @@ from django.core.exceptions import ValidationError
 class CargaForm(forms.ModelForm):
     class Meta:
         model = Carga
-        fields = ['proveedor', 'remision', 'observacion', 'archivo_factura']
+        fields = ['proveedor', 'remision', 'observaciones', 'archivo_factura']
         widgets = {
-            'observacion': forms.Textarea(attrs={'rows': 3}),
+            'observaciones': forms.Textarea(attrs={'rows': 3}),
             'archivo_factura': forms.FileInput(attrs={'accept': '.pdf,.jpg,.jpeg,.png'})
         }
         labels = {
@@ -28,7 +28,7 @@ class CargaForm(forms.ModelForm):
             'placeholder': 'Número único de remisión',
             'autocomplete': 'off'
         })
-        self.fields['observacion'].widget.attrs.update({
+        self.fields['observaciones'].widget.attrs.update({
             'placeholder': 'Observaciones adicionales...'
         })
 

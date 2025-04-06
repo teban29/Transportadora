@@ -21,7 +21,7 @@ class Carga(models.Model):
     proveedor = models.ForeignKey(Proveedor, on_delete=models.CASCADE, related_name='cargas')
     fecha = models.DateTimeField(auto_now_add=True)
     remision = models.CharField(unique=True, max_length=20)
-    observacion = models.TextField(blank=True, null=True) 
+    observaciones = models.TextField(blank=True, null=True) 
     archivo_factura = models.FileField(upload_to='facturas/', blank=True, null=True)
     
     def __str__(self):
@@ -43,14 +43,27 @@ class InventarioCarga(models.Model):
     cantidad = models.IntegerField()
     codigo_barras = models.ImageField(upload_to='codigos_barras/', blank=True, null=False)
     
+    
+    
+    def restar_stock(self, cantidad):
+        """Resta la cantidad especificada del inventario con validación"""
+        if cantidad <= 0:
+            raise ValueError("La cantidad debe ser mayor a cero")
+        if cantidad > self.cantidad_disponible:
+            raise ValueError(f"No hay suficiente stock disponible (Disponible: {self.cantidad_disponible})")
+        self.cantidad -= cantidad
+        self.save()
+        
+            
     @property
     def cantidad_disponible(self):
-        """Calcula la cantidad disponible considerando despachos"""
+        """Calcula la cantidad disponible considerando despachos pendientes"""
         total_despachado = sum(
             item.cantidad 
-            for item in self.itemdespacho_set.all()  # Relación inversa automática
+            for item in self.itemdespacho_set.all()
         )
-        return self.cantidad - total_despachado
+        return max(0, self.cantidad - total_despachado)
+    
     
     
     def __str__(self):

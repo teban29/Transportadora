@@ -10,9 +10,6 @@
         <div class="header-top">
             <h1 class="content__title">Despacho: {{ despacho.guia }}</h1>
             <div class="header-actions">
-                <a href="{% url 'lista_despachos_cliente' despacho.cliente.nombre %}" class="btn btn--primary">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </a>
                 {% if despacho.estado != 'ENTREGADO' %}
                 <div class="btn-group">
                     {% if despacho.estado == 'BODEGA' %}
@@ -39,6 +36,9 @@
             <span><i class="fas fa-calendar-alt"></i> {{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</span>
             <span><i class="fas fa-user"></i> {{ despacho.cliente.nombre }}</span>
         </div>
+        <a href="{% url 'lista_despachos_cliente' despacho.cliente.nombre %}" class="btn btn--primary">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
     </header>
 
     <hr class="divider">
@@ -135,7 +135,6 @@
                                 <th>Producto</th>
                                 <th>Cantidad</th>
                                 <th>Carga de Origen</th>
-                                <th>Disponible Actual</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -144,7 +143,6 @@
                                 <td>{{ item.inventario.producto.nombre }}</td>
                                 <td>{{ item.cantidad }}</td>
                                 <td>{{ item.inventario.carga.nombre }}</td>
-                                <td>{{ item.inventario.cantidad_disponible }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -226,7 +224,7 @@
         gap: 1rem;
         align-items: center;
         position: relative;
-        padding-left: 2rem;
+        padding-left: 4rem;
     }
     
     .status-item:not(:last-child):after {
