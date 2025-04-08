@@ -7,7 +7,9 @@
     <header class="content__header">
         <h1 class="content__title">{{ carga.nombre }}</h1>
         <div>
-            <a href="{% url 'detalle_cliente' carga.cliente.nombre %}" class="btn btn--primary">Volver al Cliente</a>
+            <a href="{% url 'detalle_cliente' carga.cliente.nombre %}" class="btn btn--primary">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
         </div>
     </header>
     <hr class="divider">
@@ -33,6 +35,8 @@
     <hr class="divider">
 
     <section class="cargas__list">
+        <h1 class="content__title">Productos</h1>
+        <br>
         {% if inventario %}
         <div class="product-grid">
             {% for item in inventario %}

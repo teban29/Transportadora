@@ -4,27 +4,73 @@ from django.db import IntegrityError
 from .forms import CargaForm
 from .utils import generar_codigo_barras_unico
 from clientes.models import Cliente
+from proveedores.models import Proveedor
 from .models import Carga, InventarioCarga, Producto
-
+from django.contrib.auth.decorators import login_required
 import logging
 from django.urls import reverse
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_GET
-
+from django.db.models import Q
+from datetime import datetime
+from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
+
+@login_required
+
+def historial_cargas(request):
+    # Obtener todas las cargas ordenadas por fecha descendente
+    cargas = Carga.objects.select_related('cliente', 'proveedor').order_by('-fecha')
+    
+    # Aplicar filtros
+    cliente_id = request.GET.get('cliente')
+    proveedor_id = request.GET.get('proveedor')
+    fecha = request.GET.get('fecha')
+    busqueda = request.GET.get('q')
+    
+    if cliente_id:
+        cargas = cargas.filter(cliente_id=cliente_id)
+    if proveedor_id:
+        cargas = cargas.filter(proveedor_id=proveedor_id)
+    if fecha:
+        try:
+            fecha_date = datetime.strptime(fecha, '%Y-%m-%d').date()
+            cargas = cargas.filter(fecha__date=fecha_date)
+        except ValueError:
+            pass
+    if busqueda:
+        cargas = cargas.filter(
+            Q(nombre__icontains=busqueda) |
+            Q(remision__icontains=busqueda) |
+            Q(observaciones__icontains=busqueda)
+        )
+    
+    context = {
+        'cargas': cargas,
+        'clientes': Cliente.objects.all().order_by('nombre'),
+        'proveedores': Proveedor.objects.all().order_by('nombre'),
+        'query_params': request.GET.urlencode().replace('page=', '')  # Para paginación
+    }
+    return render(request, 'cargas/historial_cargas.html', context)
 
 @require_GET
 def verificar_remision(request):
     remision = request.GET.get('remision', '').strip()
-    logger.debug(f"Verificando remisión: {remision}")
+    cliente_id = request.GET.get('cliente_id', '').strip()
+    logger.debug(f"Verificando remisión: {remision} para cliente: {cliente_id}")
     
     if not remision:
         return JsonResponse({'error': 'Remisión no proporcionada'}, status=400)
     
     try:
-        carga_existente = Carga.objects.filter(remision=remision).first()
+        if cliente_id:
+            carga_existente = Carga.objects.filter(remision=remision, cliente_id=cliente_id).first()
+        else:
+            carga_existente = None
+            
         response_data = {
             'exists': carga_existente is not None,
             'remision': remision,
@@ -36,6 +82,7 @@ def verificar_remision(request):
         logger.error(f"Error verificando remisión: {str(e)}")
         return JsonResponse({'error': str(e)}, status=500)
 
+@login_required
 def registrar_carga(request, cliente_id):
     cliente = get_object_or_404(Cliente, id=cliente_id)
     
@@ -47,11 +94,11 @@ def registrar_carga(request, cliente_id):
                 remision = carga_form.cleaned_data.get('remision')
                 
                 # Verificación de remisión duplicada
-                if Carga.objects.filter(remision=remision).exists():
-                    carga_existente = Carga.objects.get(remision=remision)
+                if Carga.objects.filter(remision=remision, cliente=cliente).exists():
+                    carga_existente = Carga.objects.get(remision=remision, cliente=cliente)
                     messages.error(
                         request,
-                        f'❌ Error: La remisión {remision} ya está registrada en la carga {carga_existente.nombre}',
+                        f'❌ Error: La remisión {remision} ya está registrada para este cliente en la carga {carga_existente.nombre}',
                         extra_tags='danger'
                     )
                     return render(request, 'cargas/registrar_carga.html', {
@@ -99,13 +146,13 @@ def registrar_carga(request, cliente_id):
         'cliente': cliente,
     })
 
-    
+@login_required
 def detalle_carga(request, carga_id):
     carga = get_object_or_404(Carga, id=carga_id)  # Usar get() para obtener una única carga
     inventario = carga.inventario.all()  # Obtener el inventario de la carga
     return render(request, 'cargas/detalle_carga.html', {'carga': carga, 'inventario': inventario})
 
-
+@login_required
 def generar_codigo_barras_producto(request, inventario_id):
     inventario = get_object_or_404(InventarioCarga, id=inventario_id)
     

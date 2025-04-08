@@ -30,7 +30,9 @@
         <header class="content__header">
             <h1 class="content__title">{{ cliente.nombre }}</h1>
             <div>
-                <a href="{% url 'detalle_cliente' cliente.nombre %}" class="btn btn--primary">Volver</a>
+                <a href="{% url 'detalle_cliente' cliente.nombre %}" class="btn btn--primary">
+                    <i class="fas fa-arrow-left"></i> Volver
+                </a>
             </div>
         </header>
         <hr class="divider">
@@ -91,7 +93,11 @@
         const remisionStatus = document.getElementById('remision-status');
         const remisionHelp = document.getElementById('remision-help');
         let remisionCheckTimeout = null;
-        
+
+        // Obtener el ID del cliente del formulario o URL
+        const clienteId = document.getElementById('id_cliente')?.value || 
+                        window.location.pathname.split('/').filter(Boolean).pop();
+
         if (remisionInput && remisionStatus) {
             remisionInput.addEventListener('input', function() {
                 clearTimeout(remisionCheckTimeout);
@@ -103,8 +109,7 @@
                     remisionHelp.textContent = 'Verificando...';
                     
                     remisionCheckTimeout = setTimeout(() => {
-                        // URL modificada aquí
-                        fetch(`${window.location.origin}/cargas/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}`)
+                        fetch(`${window.location.origin}/cargas/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}&cliente_id=${encodeURIComponent(clienteId)}`)
                             .then(response => {
                                 if (!response.ok) {
                                     throw new Error(`Error HTTP! estado: ${response.status}`);
@@ -115,10 +120,10 @@
                                 console.log("Respuesta API:", data);
                                 if (data.exists) {
                                     remisionStatus.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>';
-                                    remisionHelp.innerHTML = `Esta remisión ya existe. <a href="${data.existing_url}" target="_blank">Ver carga existente</a>`;
+                                    remisionHelp.innerHTML = `Esta remisión ya existe para este cliente. <a href="${data.existing_url}" target="_blank">Ver carga existente</a>`;
                                 } else {
                                     remisionStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
-                                    remisionHelp.textContent = 'Remisión disponible';
+                                    remisionHelp.textContent = 'Remisión disponible para este cliente';
                                 }
                             })
                             .catch(error => {
@@ -130,7 +135,7 @@
                     }, 800);
                 } else {
                     remisionStatus.innerHTML = '';
-                    remisionHelp.textContent = 'Número único de remisión';
+                    remisionHelp.textContent = 'Número único de remisión para este cliente';
                 }
             });
         }
