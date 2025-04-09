@@ -3,6 +3,7 @@ from cargas.models import InventarioCarga
 from clientes.models import Cliente
 import random
 import string
+from django.db.models import F
 
 # Create your models here.
 
@@ -50,8 +51,23 @@ class ItemDespacho(models.Model):
     inventario = models.ForeignKey('cargas.InventarioCarga', on_delete=models.CASCADE)
     cantidad = models.PositiveIntegerField()
     
+    
+    def save(self, *args, **kwargs):
+        # Verificar disponibilidad antes de guardar
+        self.inventario.verificar_disponibilidad(self.cantidad)
+        
+        # Guardar el ítem de despacho
+        super().save(*args, **kwargs)
+        
+        # Actualizar el inventario (no necesitamos hacer F() aquí porque ya verificamos)
+        self.inventario.cantidad = F('cantidad') - self.cantidad
+        self.inventario.save(update_fields=['cantidad'])
+    
     def __str__(self):
         return f"{self.cantidad} x {self.inventario.producto.nombre} para {self.despacho.guia}"
     
     class Meta:
         verbose_name_plural = "Items de despacho"
+        
+    
+    

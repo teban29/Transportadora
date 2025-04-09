@@ -1,8 +1,254 @@
 {% extends 'base.html' %}
-{% block title %}Inicio{% endblock %}
-{% block content %}
 {% load static %}
+
+{% block title %}Dashboard - Transportadora TC{% endblock %}
+
+{% block content %}
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<h1>Aplicacion Web para la logistica de Transportadora TC</h1>
-<hr>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
+
+<main class="main-content">
+    <header class="content__header">
+        <h1 class="content__title">Dashboard</h1>
+        <span class="text-muted">Resumen general al {{ hoy|date:"d/m/Y" }}</span>
+    </header>
+
+    <hr class="divider">
+
+    <section class="content__body">
+        <!-- Tarjetas de métricas principales -->
+        <div class="card-grid">
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Clientes</h3>
+                    <p class="metric-value">{{ total_clientes }}</p>
+                    <p class="text-muted">Total registrados</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Proveedores</h3>
+                    <p class="metric-value">{{ total_proveedores }}</p>
+                    <p class="text-muted">Total registrados</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Cargas</h3>
+                    <p class="metric-value">{{ total_cargas_mes }}</p>
+                    <p class="text-muted">Este mes</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Despachos</h3>
+                    <p class="metric-value">{{ total_despachos_mes }}</p>
+                    <p class="text-muted">Este mes</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gráficos y secciones adicionales -->
+        <div class="card-grid">
+            <!-- Gráfico de estados de despachos -->
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Estados de Despachos</h3>
+                    <canvas id="estadosDespachosChart" height="250"></canvas>
+                </div>
+            </div>
+
+            <!-- Top clientes con más cargas -->
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Clientes con más Cargas</h3>
+                    <ul class="top-list">
+                        {% for item in cargas_por_cliente %}
+                        <li>
+                            <span class="name">{{ item.cliente__nombre }}</span>
+                            <span class="badge">{{ item.total }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Últimas cargas y despachos -->
+        <div class="card-grid">
+            <!-- Últimas cargas -->
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Últimas Cargas Registradas</h3>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Cliente</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for carga in cargas_recientes %}
+                                <tr>
+                                    <td>{{ carga.nombre }}</td>
+                                    <td>{{ carga.cliente.nombre }}</td>
+                                    <td>{{ carga.fecha|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'detalle_carga' carga.id %}" class="btn btn--primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay cargas recientes</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Últimos despachos -->
+            <div class="card">
+                <div class="card__body">
+                    <h3 class="card__title">Últimos Despachos</h3>
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Guía</th>
+                                    <th>Cliente</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for despacho in despachos_recientes %}
+                                <tr>
+                                    <td>{{ despacho.guia }}</td>
+                                    <td>{{ despacho.cliente.nombre }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if despacho.estado == 'ENTREGADO' %}bg-success
+                                            {% elif despacho.estado == 'RUTA' %}bg-warning
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ despacho.get_estado_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ despacho.fecha_creacion|date:"d/m/Y" }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No hay despachos recientes</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Incluir Chart.js para gráficos -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gráfico de estados de despachos
+    const estadosCtx = document.getElementById('estadosDespachosChart').getContext('2d');
+    const estadosData = {
+        labels: [
+            {% for estado in estados_despachos %}
+                '{{ estado.estado }}',
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for estado in estados_despachos %}
+                    {{ estado.total }},
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#2c3e50',  // BODEGA
+                '#ffc107',  // RUTA
+                '#28a745',  // ENTREGADO
+            ],
+        }]
+    };
+    
+    new Chart(estadosCtx, {
+        type: 'doughnut',
+        data: estadosData,
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.label}: ${context.raw} despachos`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+    /* Estilos adicionales para el dashboard */
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: var(--color-primary);
+        margin: 0.5rem 0;
+    }
+    
+    .top-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .top-list li {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .top-list li:last-child {
+        border-bottom: none;
+    }
+    
+    .top-list .name {
+        font-weight: 500;
+    }
+    
+    .top-list .badge {
+        background-color: var(--color-primary);
+        color: white;
+        padding: 0.25rem 0.75rem;
+        border-radius: 1rem;
+        font-size: 0.85rem;
+    }
+    
+    /* Ajustes para las tarjetas de gráficos */
+    .card-grid {
+        margin-bottom: 1.5rem;
+    }
+</style>
 {% endblock %}

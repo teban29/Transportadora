@@ -61,8 +61,7 @@
                                     <div class="producto-disponible card mb-2">
                                         <div class="card__body">
                                             <h5>{{ inventario.producto.nombre }}</h5>
-                                            <p>Disponible: {{ inventario.cantidad_disponible }}</p>
-                                            <button type="button" class="btn btn--primary btn-sm agregar-producto" 
+                                            <p>Disponible: <span class="stock-available">{{ inventario.cantidad_disponible|floatformat:"0" }}</span></p>                                            <button type="button" class="btn btn--primary btn-sm agregar-producto" 
                                                     data-inventario-id="{{ inventario.id }}"
                                                     data-producto-name="{{ inventario.producto.nombre }}"
                                                     data-carga-name="{{ carga.nombre }}"

@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import Max
 from clientes.models import Cliente
 from proveedores.models import Proveedor
+from django.db.models import Sum, F
+from django.db.models.functions import Coalesce
 
 # Create your models here.
 
@@ -44,28 +46,24 @@ class InventarioCarga(models.Model):
     codigo_barras = models.ImageField(upload_to='codigos_barras/', blank=True, null=False)
     
     
-    
-    def restar_stock(self, cantidad):
-        """Resta la cantidad especificada del inventario con validación"""
-        if cantidad <= 0:
-            raise ValueError("La cantidad debe ser mayor a cero")
-        if cantidad > self.cantidad_disponible:
-            raise ValueError(f"No hay suficiente stock disponible (Disponible: {self.cantidad_disponible})")
-        self.cantidad -= cantidad
-        self.save()
-        
-            
     @property
     def cantidad_disponible(self):
-        """Calcula la cantidad disponible considerando despachos pendientes"""
-        total_despachado = sum(
-            item.cantidad 
-            for item in self.itemdespacho_set.all()
-        )
+        """Calcula la cantidad disponible basada en despachos"""
+        total_despachado = self.itemdespacho_set.aggregate(
+            total=Sum('cantidad')
+        )['total'] or 0
         return max(0, self.cantidad - total_despachado)
-    
-    
-    
-    def __str__(self):
-        return f"{self.cantidad} x {self.producto.nombre} (CARGA:{self.carga.id})"
-    
+
+    def verificar_disponibilidad(self, cantidad):
+        """Verifica disponibilidad sin modificar el inventario"""
+        try:
+            cantidad = int(cantidad)
+            if cantidad <= 0:
+                raise ValueError("La cantidad debe ser mayor a cero")
+            
+            if cantidad > self.cantidad_disponible:
+                raise ValueError(f"No hay suficiente stock (Disponible: {self.cantidad_disponible})")
+            return True
+                
+        except (TypeError, ValueError) as e:
+            raise ValueError(f"Cantidad inválida: {str(e)}")
