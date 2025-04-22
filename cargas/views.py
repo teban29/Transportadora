@@ -15,6 +15,8 @@ from django.views.decorators.http import require_GET
 from django.db.models import Q
 from datetime import datetime
 from django.utils import timezone
+from django.db.models import F, Sum
+from django.db.models.functions import Coalesce
 
 logger = logging.getLogger(__name__)
 
@@ -148,9 +150,34 @@ def registrar_carga(request, cliente_id):
 
 @login_required
 def detalle_carga(request, carga_id):
-    carga = get_object_or_404(Carga, id=carga_id)  # Usar get() para obtener una única carga
-    inventario = carga.inventario.all()  # Obtener el inventario de la carga
-    return render(request, 'cargas/detalle_carga.html', {'carga': carga, 'inventario': inventario})
+    carga = get_object_or_404(Carga, id=carga_id)
+    inventario = carga.inventario.annotate(
+        disponible=F('cantidad') - Coalesce(
+            Sum('items_despacho__cantidad'), 
+            0
+        )
+    )
+    return render(request, 'cargas/detalle_carga.html', {
+        'carga': carga, 
+        'inventario': inventario
+    })
+    
+@require_GET
+def verificar_inventario_disponible(request):
+    """Verificar disponibilidad de inventario"""
+    inventario_id = request.GET.get('inventario_id')
+    cantidad_requerida = int(request.GET.get('cantidad', 0))
+    
+    inventario = get_object_or_404(InventarioCarga, id=inventario_id)
+    disponible = inventario.cantidad_disponible
+    
+    return JsonResponse({
+        'disponible': disponible,
+        'suficiente': disponible >= cantidad_requerida,
+        'producto': inventario.producto.nombre,
+        'carga': inventario.carga.nombre,
+    })
+
 
 @login_required
 def generar_codigo_barras_producto(request, inventario_id):
@@ -185,3 +212,7 @@ def verificar_inventario_disponible(request):
         'producto': inventario.producto.nombre,
         'carga' : inventario.carga.nombre,
         })
+    
+    
+from django.http import JsonResponse
+

@@ -4,66 +4,78 @@
 
 {% block content %}
 <main class="main-content">
-        <header class="content__header">
-            <h1 class="content__title">{{ cliente.nombre }}</h1>
-            <div>
-                <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success">Registrar Carga</a>
-                <a href="{% url 'crear_despacho' cliente.nombre %}" class="btn btn--success">Crear Despacho</a>
-                <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
-            </div>
-        </header>
-        <hr class="divider">
-
-        <!-- Filtros y búsqueda (lo implementaremos después) -->
-        <div class="filtros">
-            <div class="filtros">
-                <form method="get" class="filtros-form">
-                    <!-- Filtro por orden de registro -->
-                    <div class="filtro-group">
-                        <label for="orden">Ordenar por:</label>
-                        <select name="orden" id="orden">
-                            <option value="reciente">Más recientes primero</option>
-                            <option value="antiguo">Más antiguos primero</option>
-                        </select>
-                    </div>
-            
-                    <!-- Filtro por fecha -->
-                    <div class="filtro-group">
-                        <label for="fecha">Filtrar por fecha:</label>
-                        <input type="date" name="fecha" id="fecha">
-                    </div>
-            
-                    <!-- Barra de búsqueda -->
-                    <div class="filtro-group">
-                        <label for="buscar">Buscar carga:</label>
-                        <input type="text" name="buscar" id="buscar" placeholder="Nombre de la carga">
-                    </div>
-            
-                    <!-- Botón para aplicar filtros -->
-                    <button type="submit" class="btn btn--primary">Aplicar Filtros</button>
-                </form>
-            </div>
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">{{ cliente.nombre }}</h1>
+        <div class="header__actions">
+            <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success btn--icon">
+                <i class="fas fa-box-open"></i> Registrar Carga
+            </a>
+            <a href="{% url 'crear_despacho' cliente.nombre %}" class="btn btn--success btn--icon">
+                <i class="fas fa-truck"></i> Crear Despacho
+            </a>
+            <a href="{% url 'clientes' %}" class="btn btn--primary btn--icon">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
         </div>
+    </header>
+    
+    <hr class="divider">
 
-        <!-- Lista de cargas -->
-        <section class="cargas__list">
-            {% if cargas %}
+    <!-- Filtros y búsqueda -->
+    <div class="filters">
+        <form method="get" class="filter-form">
+            <div class="filter-group">
+                <label for="orden" class="filter-label">Ordenar por:</label>
+                <select name="orden" id="orden" class="filter-select">
+                    <option value="reciente">Más recientes primero</option>
+                    <option value="antiguo">Más antiguos primero</option>
+                </select>
+            </div>
+    
+            <div class="filter-group">
+                <label for="fecha" class="filter-label">Filtrar por fecha:</label>
+                <input type="date" name="fecha" id="fecha" class="filter-input">
+            </div>
+    
+            <div class="filter-group">
+                <label for="buscar" class="filter-label">Buscar carga:</label>
+                <input type="text" name="buscar" id="buscar" placeholder="Nombre de la carga" class="filter-input">
+            </div>
+    
+            <button type="submit" class="btn btn--primary btn--icon">
+                <i class="fas fa-filter"></i> Aplicar Filtros
+            </button>
+        </form>
+    </div>
+
+    <!-- Lista de cargas -->
+    <section class="objects-list">
+        {% if cargas %}
+            <div class="card-grid">
                 {% for carga in cargas %}
-                    <div class="carga-card">
-                        <div class="carga-card__header">
-                            <a href="{% url 'detalle_carga' carga.id %}">
-                                <h2 class="carga-card__title">{{ carga.nombre }}</h2>
+                    <article class="card card--hover">
+                        <div class="card__header">
+                            <a href="{% url 'detalle_carga' carga.id %}" class="card__title-link">
+                                <h2 class="card__title">{{ carga.nombre }}</h2>
                             </a>
-                            <p class="carga-card__fecha">{{ carga.fecha|date:"d/m/Y H:i" }}</p>
+                            <span class="card__date">{{ carga.fecha|date:"d/m/Y H:i" }}</span>
                         </div>
-                        <p class="carga-card__proveedor">Proveedor: {{ carga.proveedor.nombre }}</p>
-                    </div>
+                        <div class="card__body">
+                            <p class="card__text"><strong>Proveedor:</strong> {{ carga.proveedor.nombre }}</p>
+                            <p class="card__text"><strong>Remision:</strong> <span class="badge">{{ carga.remision }}</span></p>
+                        </div>
+                    </article>
                 {% endfor %}
-            {% else %}
-                <div class="no-cargas">
-                    <p class="no-cargas__message">No hay cargas registradas.</p>
-                </div>
-            {% endif %}
-        </section>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="empty-state__icon fas fa-box-open"></i>
+                <p class="empty-state__message">No hay cargas registradas para este cliente.</p>
+                <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success btn--icon">
+                    <i class="fas fa-plus"></i> Registrar primera carga
+                </a>
+            </div>
+        {% endif %}
+    </section>
 </main>
 {% endblock %}

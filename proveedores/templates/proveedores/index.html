@@ -1,34 +1,51 @@
-
 {% extends 'base.html' %}
 
 {% block title %}Proveedores - Logística{% endblock %}
 {% load static %}
 {% block content %}
 <main class="main-content">
-    <header class="content__header">
-        <h1 class="content__title">Proveedores</h1>
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">
+            <i class="fas fa-truck"></i> Proveedores
+        </h1>
         {% if user.is_staff %}
-            <a href="{% url 'crear_proveedor' %}" class="btn btn--success">Crear Proveedor</a>
+            <a href="{% url 'crear_proveedor' %}" class="btn btn--success btn--icon">
+                <i class="fas fa-plus"></i> Crear Proveedor
+            </a>
         {% endif %}
     </header>
 
     <hr class="divider">
 
-    <section class="objects__list">
+    <section class="objects-list">
         {% if proveedores %}
             <div class="card-grid">
                 {% for proveedor in proveedores %}
-                    <article class="card">
+                    <article class="card card--hover">
                         <div class="card__body">
-                            <a href="{% url 'detalle_proveedor' proveedor.nombre %}"></a>
-                                <h1 class="card__title">{{ proveedor.nombre }}</h1>
+                            <a href="{% url 'detalle_proveedor' proveedor.nombre %}" class="card__title-link">
+                                <h2 class="card__title">{{ proveedor.nombre }}</h2>
                             </a>
-                            <p class="card__text"><strong>Contacto:</strong> {{ proveedor.contacto }}</p>
-
+                            <div class="card__meta">
+                                <p class="card__text">
+                                    <i class="fas fa-user"></i> {{ proveedor.contacto|default:"Sin contacto registrado" }}
+                                </p>
+                                {% if proveedor.telefono %}
+                                <p class="card__text">
+                                    <i class="fas fa-phone"></i> {{ proveedor.telefono }}
+                                </p>
+                                {% endif %}
+                            </div>
                             {% if user.is_staff %}
                                 <div class="card__actions">
-                                    <a href="{% url 'editar_proveedor' proveedor.nombre %}" class="btn btn--primary">Editar</a>
-                                    <a href="{% url 'eliminar_proveedor' proveedor.id %}" class="btn btn--danger" onclick="return ConfirmDeleteProveedor()">Eliminar</a>
+                                    <a href="{% url 'editar_proveedor' proveedor.nombre %}" class="btn btn--primary btn--sm btn--icon">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <a href="{% url 'eliminar_proveedor' proveedor.id %}" 
+                                       class="btn btn--danger btn--sm btn--icon"
+                                       onclick="return confirm('¿Estás seguro de que deseas eliminar este proveedor?');">
+                                        <i class="fas fa-trash-alt"></i> Eliminar
+                                    </a>
                                 </div>
                             {% endif %}
                         </div>
@@ -36,12 +53,16 @@
                 {% endfor %}
             </div>
         {% else %}
-            <div class="no-clients">
-                <p class="no-clients__message">No hay proveedores registrados.</p>
+            <div class="empty-state">
+                <i class="empty-state__icon fas fa-truck"></i>
+                <p class="empty-state__message">No hay proveedores registrados.</p>
+                {% if user.is_staff %}
+                    <a href="{% url 'crear_proveedor' %}" class="btn btn--success btn--icon">
+                        <i class="fas fa-plus"></i> Registrar primer proveedor
+                    </a>
+                {% endif %}
             </div>
         {% endif %}
     </section>
 </main>
-<script src="{% static 'js/scripts.js' %}"></script>
-
 {% endblock %}

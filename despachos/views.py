@@ -8,7 +8,8 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Prefetch, F, Sum
 from django.db.models.functions import Coalesce
-
+from django.views.decorators.http import require_http_methods
+from django.urls import reverse
 
 def lista_despachos(request, cliente_nombre=None):
     """Lista todos los despachos, con filtro opcional por cliente"""
@@ -73,9 +74,14 @@ def crear_despacho(request, cliente_nombre):
         cliente=cliente
     ).prefetch_related(
         Prefetch('inventario', 
-                queryset=InventarioCarga.objects.filter(
-                    cantidad__gt=0
-                ).select_related('producto'))
+               queryset=InventarioCarga.objects.annotate(
+                   disponible=F('cantidad') - Coalesce(
+                       Sum('items_despacho__cantidad'), 
+                       0
+                   )
+               ).filter(
+                   disponible__gt=0
+               ).select_related('producto'))
     ).order_by('-fecha')
     
     if request.method == 'POST':
@@ -105,18 +111,12 @@ def crear_despacho(request, cliente_nombre):
                     if not items_data:
                         raise ValueError('Debe agregar al menos un producto')
                     
-                    # Primera pasada: validar todo el stock
-                    inventarios = {}
+                    # Crear items si todo está bien
                     for inventario_id, cantidad in items_data:
                         inventario = InventarioCarga.objects.get(id=inventario_id)
-                        inventario.verificar_disponibilidad(cantidad)
-                        inventarios[inventario_id] = inventario
-                    
-                    # Segunda pasada: crear items si todo está bien
-                    for inventario_id, cantidad in items_data:
                         ItemDespacho.objects.create(
                             despacho=despacho,
-                            inventario=inventarios[inventario_id],
+                            inventario=inventario,
                             cantidad=cantidad
                         )
                     
@@ -138,8 +138,6 @@ def crear_despacho(request, cliente_nombre):
     }
     return render(request, 'despachos/crear_despacho.html', context)
 
-
-
 def cambiar_estado_despacho(request, pk, nuevo_estado):
     """Cambia el estado de un despacho"""
     despacho = get_object_or_404(Despacho, pk=pk)
@@ -153,3 +151,32 @@ def cambiar_estado_despacho(request, pk, nuevo_estado):
         messages.error(request, 'Estado no válido')
     
     return redirect('detalle_despacho', pk=pk)
+
+
+@require_http_methods(["GET", "POST"])
+def seguimiento_despacho(request):
+    """Vista para ingresar la guía de despacho"""
+    guia = ''
+    error = None
+    
+    if request.method == 'POST':
+        guia = request.POST.get('guia', '').strip()
+        if guia:
+            if Despacho.objects.filter(guia=guia).exists():
+                return redirect('detalle-seguimiento', guia=guia)  # Cambiado aquí
+            error = "No se encontró un despacho con esta guía"
+    
+    return render(request, 'despachos/seguimiento.html', {
+        'guia': guia,
+        'error': error
+    })
+    
+def detalle_seguimiento(request, guia):
+    """Vista que muestra los detalles del despacho"""
+    despacho = get_object_or_404(Despacho, guia=guia)
+    items = despacho.items.select_related('inventario__producto')
+    
+    return render(request, 'despachos/detalle_seguimiento.html', {
+        'despacho': despacho,
+        'items': items
+    })

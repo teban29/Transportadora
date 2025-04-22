@@ -1,18 +1,101 @@
 {% extends 'base.html' %}
 
-{% block title %}{{ proveedor.nombre }}{% endblock %}
+{% block title %}{{ proveedor.nombre }} - Detalles{% endblock %}
 
 {% block content %}
-<main>
-    <header class="proveedores__header">
-        <h1 class="proveedores__title">{{ proveedor.nombre }}</h1>
+<main class="main-content">
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">
+            <i class="fas fa-truck"></i> {{ proveedor.nombre }}
+        </h1>
+        <div class="header-actions">
+            <a href="{% url 'proveedores' %}" class="btn btn--primary btn--icon">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+            {% if user.is_staff %}
+                <a href="{% url 'editar_proveedor' proveedor.nombre %}" class="btn btn--success btn--icon">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+            {% endif %}
+        </div>
     </header>
+
     <hr class="divider">
-    <section class="proveedor__details">        
-        <p><strong>NIT:</strong> {{ proveedor.nit }}</p>
-        <p><strong>Nombre:</strong> {{ proveedor.nombre }}</p>
-        <p><strong>Contacto:</strong> {{ proveedor.contacto }}</p>
-        <p><strong>Fecha de Creación:</strong> {{ proveedor.fecha_creacion }}</p>
+
+    <section class="detail-section">
+        <div class="detail-grid">
+            <div class="detail-group">
+                <h3 class="detail-label">NIT</h3>
+                <p class="detail-value">{{ proveedor.nit }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Contacto</h3>
+                <p class="detail-value">{{ proveedor.contacto|default:"-" }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Teléfono</h3>
+                <p class="detail-value">{{ proveedor.telefono|default:"-" }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Email</h3>
+                <p class="detail-value">
+                    {% if proveedor.email %}
+                        <a href="mailto:{{ proveedor.email }}" class="text-link">{{ proveedor.email }}</a>
+                    {% else %}
+                        -
+                    {% endif %}
+                </p>
+            </div>
+            
+            <div class="detail-group detail-group--full">
+                <h3 class="detail-label">Dirección</h3>
+                <p class="detail-value">{{ proveedor.direccion|default:"-" }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Fecha de Registro</h3>
+                <p class="detail-value">{{ proveedor.fecha_creacion|date:"d/m/Y" }}</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Sección de cargas relacionadas si es necesario -->
+    <hr class="divider">
+
+    <section class="related-section">
+        <h2 class="section-title">
+            <i class="fas fa-boxes"></i> Cargas Relacionadas
+        </h2>
+        
+        {% if cargas_proveedor %}
+            <div class="card-grid">
+                {% for carga in cargas_proveedor %}
+                    <article class="card card--hover">
+                        <div class="card__body">
+                            <a href="{% url 'detalle_carga' carga.id %}" class="card__title-link">
+                                <h3 class="card__title">{{ carga.nombre }}</h3>
+                            </a>
+                            <div class="card__meta">
+                                <p class="card__text">
+                                    <i class="fas fa-calendar-alt"></i> {{ carga.fecha|date:"d/m/Y" }}
+                                </p>
+                                <p class="card__text">
+                                    <i class="fas fa-user-tag"></i> {{ carga.cliente.nombre }}
+                                </p>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="empty-state__icon fas fa-box-open"></i>
+                <p class="empty-state__message">No hay cargas registradas para este proveedor</p>
+            </div>
+        {% endif %}
     </section>
 </main>
-{% endblock %}  
+{% endblock %}

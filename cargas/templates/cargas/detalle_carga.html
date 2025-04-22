@@ -4,69 +4,105 @@
 
 {% block content %}
 <main class="main-content">
-    <header class="content__header">
+    <header class="content__header content__header--flex">
         <h1 class="content__title">{{ carga.nombre }}</h1>
         <div>
-            <a href="{% url 'detalle_cliente' carga.cliente.nombre %}" class="btn btn--primary">
+            <a href="{% url 'detalle_cliente' carga.cliente.nombre %}" class="btn btn--primary btn--icon">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
         </div>
     </header>
+    
     <hr class="divider">
     
-    <section class="carga__details">  
-        <p><strong>Factura:</strong> 
-            {% if carga.archivo_factura %}
-                <a href="{{ carga.archivo_factura.url }}" 
-                   target="_blank" 
-                   class="factura-link">
-                   <i class="fas fa-file-pdf"></i> Ver Factura ({{ carga.archivo_factura.name|slice:"-10:" }})
-                </a>
-            {% else %}
-                <span class="text-muted">No hay factura cargada</span>
-            {% endif %}
-        </p>
-        <p><strong>Cliente:</strong> {{ carga.cliente.nombre }}</p>
-        <p><strong>Proveedor:</strong> {{ carga.proveedor.nombre }}</p>
-        <p><strong>Remision:</strong> {{ carga.remision }}</p>
-        <p><strong>Fecha:</strong> {{ carga.fecha|date:"d/m/Y - P" }}</p>
-        <p><strong>Observaciones:</strong> {{ carga.observaciones }}</p>
+    <section class="detail-section">
+        <div class="detail-grid">
+            <div class="detail-group">
+                <h3 class="detail-label">Factura</h3>
+                <div class="detail-value">
+                    {% if carga.archivo_factura %}
+                        <a href="{{ carga.archivo_factura.url }}" 
+                           target="_blank" 
+                           class="file-link">
+                           <i class="fas fa-file-pdf"></i> Ver Factura
+                        </a>
+                        <span class="file-meta">({{ carga.archivo_factura.name|slice:"-10:" }})</span>
+                    {% else %}
+                        <span class="text-muted">No hay factura cargada</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Cliente</h3>
+                <p class="detail-value">{{ carga.cliente.nombre }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Proveedor</h3>
+                <p class="detail-value">{{ carga.proveedor.nombre }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Remisión</h3>
+                <p class="detail-value">{{ carga.remision }}</p>
+            </div>
+            
+            <div class="detail-group">
+                <h3 class="detail-label">Fecha</h3>
+                <p class="detail-value">{{ carga.fecha|date:"d/m/Y - P" }}</p>
+            </div>
+            
+            <div class="detail-group detail-group--full">
+                <h3 class="detail-label">Observaciones</h3>
+                <p class="detail-value">{{ carga.observaciones|default:"-" }}</p>
+            </div>
+        </div>
     </section>
+    
     <hr class="divider">
 
-    <section class="cargas__list">
-        <h1 class="content__title">Productos</h1>
-        <br>
+    <section class="products-section">
+        <header class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-boxes"></i> Productos
+            </h2>
+        </header>
+        
         {% if inventario %}
         <div class="product-grid">
             {% for item in inventario %}
-                <div class="product-card">
+                <article class="product-card">
                     <div class="product-card__header">
                         <h3 class="product-card__title">{{ item.producto.nombre }}</h3>
                         <a href="{% url 'generar_codigo_barras_producto' item.id %}" 
-                           class="btn btn-primary" 
+                           class="btn btn--primary btn--sm btn--icon"
                            target="_blank"
                            onclick="window.open(this.href, '_blank', 'width=800,height=600'); return false;">
-                           <i class="fas fa-barcode"></i> <span class="btn-text">Imprimir Código</span>
+                           <i class="fas fa-barcode"></i> <span>Código</span>
                         </a>
                     </div>
-                    <div class="product-card__meta">
-                        <p class="product-card__text">{{ item.cantidad }} unidades</p>
-                        {% if item.producto.codigo %}
-                        <p class="product-card__code">
-                            <i class="fas fa-hashtag"></i> {{ item.producto.codigo }}
-                        </p>
-                        {% endif %}
+                    <div class="product-card__body">
+                        <div class="product-meta">
+                            <span class="product-meta__quantity">
+                                <i class="fas fa-cubes"></i> {{ item.cantidad_disponible }} unidades
+                            </span>
+                            {% if item.producto.codigo %}
+                            <span class="product-meta__code">
+                                <i class="fas fa-hashtag"></i> {{ item.producto.codigo }}
+                            </span>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
+                </article>
             {% endfor %}
         </div>
-    {% else %}
-        <div class="no-cargas">
-            <i class="no-cargas__icon fas fa-box-open"></i>
-            <p class="no-cargas__message">No hay productos registrados en esta carga.</p>
+        {% else %}
+        <div class="empty-state">
+            <i class="empty-state__icon fas fa-box-open"></i>
+            <p class="empty-state__message">No hay productos registrados en esta carga.</p>
         </div>
-    {% endif %} 
+        {% endif %} 
     </section>
 </main>
 {% endblock %}

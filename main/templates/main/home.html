@@ -4,9 +4,6 @@
 {% block title %}Dashboard - Transportadora TC{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.css">
-
 <main class="main-content">
     <header class="content__header">
         <h1 class="content__title">Dashboard</h1>
@@ -20,7 +17,7 @@
         <div class="card-grid">
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Clientes</h3>
+                    <h3 class="card__title"><i class="fas fa-users"></i> Clientes</h3>
                     <p class="metric-value">{{ total_clientes }}</p>
                     <p class="text-muted">Total registrados</p>
                 </div>
@@ -28,7 +25,7 @@
 
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Proveedores</h3>
+                    <h3 class="card__title"><i class="fas fa-truck"></i> Proveedores</h3>
                     <p class="metric-value">{{ total_proveedores }}</p>
                     <p class="text-muted">Total registrados</p>
                 </div>
@@ -36,7 +33,7 @@
 
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Cargas</h3>
+                    <h3 class="card__title"><i class="fas fa-box-open"></i> Cargas</h3>
                     <p class="metric-value">{{ total_cargas_mes }}</p>
                     <p class="text-muted">Este mes</p>
                 </div>
@@ -44,7 +41,7 @@
 
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Despachos</h3>
+                    <h3 class="card__title"><i class="fas fa-shipping-fast"></i> Despachos</h3>
                     <p class="metric-value">{{ total_despachos_mes }}</p>
                     <p class="text-muted">Este mes</p>
                 </div>
@@ -56,21 +53,25 @@
             <!-- Gráfico de estados de despachos -->
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Estados de Despachos</h3>
-                    <canvas id="estadosDespachosChart" height="250"></canvas>
+                    <h3 class="card__title"><i class="fas fa-chart-pie"></i> Estados de Despachos</h3>
+                    <div class="chart-container">
+                        <canvas id="estadosDespachosChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <!-- Top clientes con más cargas -->
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Clientes con más Cargas</h3>
+                    <h3 class="card__title"><i class="fas fa-trophy"></i> Top Clientes</h3>
                     <ul class="top-list">
                         {% for item in cargas_por_cliente %}
                         <li>
                             <span class="name">{{ item.cliente__nombre }}</span>
                             <span class="badge">{{ item.total }}</span>
                         </li>
+                        {% empty %}
+                        <li class="text-muted">No hay datos disponibles</li>
                         {% endfor %}
                     </ul>
                 </div>
@@ -82,7 +83,7 @@
             <!-- Últimas cargas -->
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Últimas Cargas Registradas</h3>
+                    <h3 class="card__title"><i class="fas fa-clock"></i> Últimas Cargas</h3>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -119,7 +120,7 @@
             <!-- Últimos despachos -->
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Últimos Despachos</h3>
+                    <h3 class="card__title"><i class="fas fa-clock"></i> Últimos Despachos</h3>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -163,92 +164,76 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
 
 <script>
+// Espera a que todo el DOM esté cargado
 document.addEventListener('DOMContentLoaded', function() {
-    // Gráfico de estados de despachos
-    const estadosCtx = document.getElementById('estadosDespachosChart').getContext('2d');
-    const estadosData = {
+    // 1. Verificación del elemento canvas
+    const canvas = document.getElementById('estadosDespachosChart');
+    if (!canvas) {
+        console.error('No se encontró el elemento canvas para el gráfico');
+        return;
+    }
+
+    // 2. Mostrar datos en consola para depuración
+    console.log('Datos del gráfico:', {
         labels: [
             {% for estado in estados_despachos %}
                 '{{ estado.estado }}',
             {% endfor %}
         ],
-        datasets: [{
-            data: [
-                {% for estado in estados_despachos %}
-                    {{ estado.total }},
-                {% endfor %}
-            ],
-            backgroundColor: [
-                '#2c3e50',  // BODEGA
-                '#ffc107',  // RUTA
-                '#28a745',  // ENTREGADO
-            ],
-        }]
-    };
-    
-    new Chart(estadosCtx, {
-        type: 'doughnut',
-        data: estadosData,
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom',
-                },
-                tooltip: {
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.label}: ${context.raw} despachos`;
+        values: [
+            {% for estado in estados_despachos %}
+                {{ estado.total }},
+            {% endfor %}
+        ]
+    });
+
+    // 3. Creación del gráfico con configuración segura
+    try {
+        const ctx = canvas.getContext('2d');
+        const chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for estado in estados_despachos %}
+                        '{{ estado.estado }}',
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for estado in estados_despachos %}
+                            {{ estado.total }},
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        '#2c3e50',  // BODEGA
+                        '#ffc107',  // RUTA
+                        '#28a745',  // ENTREGADO
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.label}: ${context.raw} despachos`;
+                            }
                         }
                     }
                 }
             }
-        }
-    });
+        });
+
+        console.log('Gráfico creado exitosamente');
+    } catch (error) {
+        console.error('Error al crear el gráfico:', error);
+    }
 });
 </script>
-
-<style>
-    /* Estilos adicionales para el dashboard */
-    .metric-value {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: var(--color-primary);
-        margin: 0.5rem 0;
-    }
-    
-    .top-list {
-        list-style: none;
-        padding: 0;
-    }
-    
-    .top-list li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 0;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .top-list li:last-child {
-        border-bottom: none;
-    }
-    
-    .top-list .name {
-        font-weight: 500;
-    }
-    
-    .top-list .badge {
-        background-color: var(--color-primary);
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 1rem;
-        font-size: 0.85rem;
-    }
-    
-    /* Ajustes para las tarjetas de gráficos */
-    .card-grid {
-        margin-bottom: 1.5rem;
-    }
-</style>
 {% endblock %}

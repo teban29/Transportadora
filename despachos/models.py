@@ -45,29 +45,23 @@ class Despacho(models.Model):
                 
         super().save(*args, **kwargs)
         
-
 class ItemDespacho(models.Model):
     despacho = models.ForeignKey(Despacho, on_delete=models.CASCADE, related_name='items')
-    inventario = models.ForeignKey('cargas.InventarioCarga', on_delete=models.CASCADE)
+    inventario = models.ForeignKey(InventarioCarga, on_delete=models.CASCADE, related_name='items_despacho')
     cantidad = models.PositiveIntegerField()
     
+    def clean(self):
+        """Validación adicional antes de guardar"""
+        super().clean()
+        self.inventario.verificar_disponibilidad(self.cantidad)
     
     def save(self, *args, **kwargs):
-        # Verificar disponibilidad antes de guardar
-        self.inventario.verificar_disponibilidad(self.cantidad)
-        
-        # Guardar el ítem de despacho
+        """Sobrescribimos save para incluir validación"""
+        self.clean()
         super().save(*args, **kwargs)
-        
-        # Actualizar el inventario (no necesitamos hacer F() aquí porque ya verificamos)
-        self.inventario.cantidad = F('cantidad') - self.cantidad
-        self.inventario.save(update_fields=['cantidad'])
     
     def __str__(self):
         return f"{self.cantidad} x {self.inventario.producto.nombre} para {self.despacho.guia}"
     
     class Meta:
         verbose_name_plural = "Items de despacho"
-        
-    
-    

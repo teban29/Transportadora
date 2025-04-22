@@ -1,10 +1,177 @@
 {% extends 'base.html' %}
 
+{% block title %}{% if object %}Editar{% else %}Crear{% endif %} Usuario{% endblock %}
+
 {% block content %}
-<h1>{% if object %}Editar{% else %}Crear{% endif %} Usuario</h1>
-<form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button type="submit">Guardar</button>
-</form>
+<main class="main-content">
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">
+            <i class="fas fa-user-edit"></i> {% if object %}Editar{% else %}Crear{% endif %} Usuario
+        </h1>
+        <a href="{% url 'user_list' %}" class="btn btn--primary btn--icon">
+            <i class="fas fa-arrow-left"></i> Volver
+        </a>
+    </header>
+
+    <hr class="divider">
+
+    <form method="post" class="form">
+        {% csrf_token %}
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="{{ form.username.id_for_label }}">{{ form.username.label }}</label>
+                {{ form.username }}
+                {% if form.username.errors %}
+                    <div class="form-error">{{ form.username.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="form-error">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            
+            
+            <div class="form-group">
+                <label for="{{ form.first_name.id_for_label }}">{{ form.first_name.label }}</label>
+                {{ form.first_name }}
+                {% if form.first_name.errors %}
+                    <div class="form-error">{{ form.first_name.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.last_name.id_for_label }}">{{ form.last_name.label }}</label>
+                {{ form.last_name }}
+                {% if form.last_name.errors %}
+                    <div class="form-error">{{ form.last_name.errors }}</div>
+                {% endif %}
+            </div>
+
+            {% if form.password1 %}
+            <div class="form-group">
+                <label for="{{ form.password1.id_for_label }}">{{ form.password1.label }}</label>
+                {{ form.password1 }}
+                {% if form.password1.errors %}
+                    <div class="form-error">{{ form.password1.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            {% if form.password2 %}
+            <div class="form-group">
+                <label for="{{ form.password2.id_for_label }}">{{ form.password2.label }}</label>
+                {{ form.password2 }}
+                {% if form.password2.errors %}
+                    <div class="form-error">{{ form.password2.errors }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="form-group">
+                <label class="switch-label">Estado</label>
+                <label class="switch">
+                    {{ form.is_active }}
+                    <span class="slider round"></span>
+                </label>
+                <span class="switch-status">{{ form.is_active.value|yesno:"Activo,Inactivo" }}</span>
+            </div>
+        </div>
+
+        <!-- Sección de grupos -->
+        <div class="form-section">
+            <h3 class="form-section__title">
+                <i class="fas fa-users"></i> Asignación de Grupos
+            </h3>
+            
+            <div class="form-section__content">
+                <div class="groups-toolbar">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="group-filter" placeholder="Filtrar grupos..." class="search-input">
+                    </div>
+                    <button type="button" class="btn btn--secondary btn--sm btn--icon btn-toggle-all">
+                        <i class="fas fa-check-double"></i> Seleccionar Todos
+                    </button>
+                </div>
+                
+                <div class="groups-list-container">
+                    <div class="groups-list">
+                        {% for group in form.groups.field.queryset %}
+                        <div class="group-item">
+                            <label class="group-checkbox">
+                                <input type="checkbox" name="groups" value="{{ group.id }}" 
+                                       {% if group in form.groups.initial %}checked{% endif %}>
+                                <span class="checkmark"></span>
+                                <span class="group-name">{{ group.name }}</span>
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% if form.groups.errors %}
+                    <div class="form-error">{{ form.groups.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg btn--icon">
+                <i class="fas fa-save"></i> Guardar
+            </button>
+            <a href="{% url 'user_list' %}" class="btn btn--danger btn--lg btn--icon">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
+    </form>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filtro de grupos
+    const groupFilter = document.getElementById('group-filter');
+    const groupItems = document.querySelectorAll('.group-item');
+    
+    groupFilter.addEventListener('input', function() {
+        const filterText = this.value.toLowerCase();
+        
+        groupItems.forEach(item => {
+            const groupName = item.querySelector('.group-name').textContent.toLowerCase();
+            item.style.display = groupName.includes(filterText) ? 'block' : 'none';
+        });
+    });
+    
+    // Seleccionar todos los grupos
+    const toggleAllBtn = document.querySelector('.btn-toggle-all');
+    toggleAllBtn.addEventListener('click', function() {
+        const checkboxes = document.querySelectorAll('.group-checkbox input');
+        const allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = !allChecked;
+            // Disparar evento change para actualizar estilos
+            const event = new Event('change');
+            checkbox.dispatchEvent(event);
+        });
+        
+        this.innerHTML = allChecked 
+            ? '<i class="fas fa-check-double"></i> Seleccionar Todos' 
+            : '<i class="fas fa-times"></i> Deseleccionar Todos';
+    });
+    
+    // Actualizar estado del switch
+    const activeSwitch = document.getElementById('{{ form.is_active.id_for_label }}');
+    const switchStatus = document.querySelector('.switch-status');
+    
+    if (activeSwitch && switchStatus) {
+        activeSwitch.addEventListener('change', function() {
+            switchStatus.textContent = this.checked ? 'Activo' : 'Inactivo';
+        });
+    }
+});
+</script>
 {% endblock %}

@@ -1,163 +1,208 @@
 {% extends 'base.html' %}
 
 {% block title %}Registrar Carga{% endblock %}
-<style>
-    #remision-status {
-        font-size: 0.8em;
-        margin-left: 10px;
-    }
-    .fa-check-circle {
-        color: #28a745;
-    }
-    .fa-exclamation-circle {
-        color: #dc3545;
-    }
-    .fa-spinner {
-        color: #6c757d;
-    }
-    #remision-help {
-        display: block;
-        margin-top: 5px;
-        font-size: 0.8em;
-        color: #6c757d;
-    }
-    #remision-help a {
-        color: #dc3545;
-    }
-</style>
+
 {% block content %}
 <main class="main-content">        
-        <header class="content__header">
-            <h1 class="content__title">{{ cliente.nombre }}</h1>
-            <div>
-                <a href="{% url 'detalle_cliente' cliente.nombre %}" class="btn btn--primary">
-                    <i class="fas fa-arrow-left"></i> Volver
-                </a>
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">Registrar Carga para {{ cliente.nombre }}</h1>
+        <div>
+            <a href="{% url 'detalle_cliente' cliente.nombre %}" class="btn btn--primary btn--icon">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
+        </div>
+    </header>
+    
+    <hr class="divider">
+    
+    <form method="post" enctype="multipart/form-data" class="form" id="carga-form">
+        {% csrf_token %}
+        
+        <!-- Información de la carga -->
+        <div class="form-section">
+            <h2 class="form-section__title">
+                <i class="fas fa-info-circle"></i> Información de la Carga
+            </h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="{{ carga_form.proveedor.id_for_label }}">Proveedor</label>
+                    {{ carga_form.proveedor }}
+                    {% if carga_form.proveedor.errors %}
+                        <div class="form-error">{{ carga_form.proveedor.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ carga_form.remision.id_for_label }}">Remisión</label>
+                    <div class="input-with-status">
+                        {{ carga_form.remision }}
+                        <span id="remision-status" class="input-status"></span>
+                    </div>
+                    <small id="remision-help" class="form-help-text">Número único de remisión</small>
+                    {% if carga_form.remision.errors %}
+                        <div class="form-error">{{ carga_form.remision.errors }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group form-group--full">
+                    <label for="{{ carga_form.observaciones.id_for_label }}">Observaciones</label>
+                    {{ carga_form.observaciones }}
+                    {% if carga_form.observaciones.errors %}
+                        <div class="form-error">{{ carga_form.observaciones.errors }}</div>
+                    {% endif %}
+                </div>
             </div>
-        </header>
+        </div>
+        
         <hr class="divider">
         
-        <form method="post" enctype="multipart/form-data" class="" id="carga-form">
-            {% csrf_token %}
+        <!-- Productos -->
+        <div class="form-section">
+            <h2 class="form-section__title">
+                <i class="fas fa-boxes"></i> Productos
+            </h2>
             
-            <!-- Formulario de carga -->
-            <div class="form-group">
-                <h2>Proveedor</h2>
-                {{ carga_form.proveedor }}
-            </div>
-
-            <div class="form-group">
-                <h2>Remisión <span id="remision-status"></span></h2>
-                {{ carga_form.remision }}
-                <small id="remision-help">Número único de remisión</small>
-            </div>
-
-            <div class="form-group">
-                <h2>Observacion</h2>
-                {{ carga_form.observaciones }}
-            </div>
-            
-            <hr class="divider">    
-            
-            <!-- Campos dinámicos para productos -->
-            <h2>Productos</h2>
-            <div id="productos-container">
-                <div class="producto-form card">
-                    <div class="form-group">
-                        <input type="text" name="nombre" placeholder="Nombre del producto" required>
+            <div id="productos-container" class="products-container">
+                <div class="product-form card">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre del producto</label>
+                            <input type="text" name="nombre" placeholder="Ej: Camiseta básica" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Cantidad</label>
+                            <input type="number" name="cantidad" placeholder="Ej: 100" min="1" required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <input type="number" name="cantidad" placeholder="Cantidad" min="1" required>
-                    </div>
-                    <button type="button" class="btn btn--danger eliminar-producto">Eliminar</button>
+                    <button type="button" class="btn btn--danger btn--sm eliminar-producto">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
                 </div>      
             </div>
             
-            <!-- Botón para agregar más productos -->
-            <button type="button" id="añadir-producto" class="btn btn--success">Añadir Producto</button>
+            <button type="button" id="añadir-producto" class="btn btn--success btn--icon">
+                <i class="fas fa-plus"></i> Añadir Producto
+            </button>
+        </div>
+        
+        <hr class="divider">
+        
+        <!-- Factura -->
+        <div class="form-section">
+            <h2 class="form-section__title">
+                <i class="fas fa-file-invoice"></i> Documentación
+            </h2>
             
             <div class="form-group">
-                {{ carga_form.archivo_factura.label_tag }}
-                {{ carga_form.archivo_factura }}
+                <label for="{{ carga_form.archivo_factura.id_for_label }}">Factura (PDF)</label>
+                <div class="file-upload">
+                    {{ carga_form.archivo_factura }}
+                    <label for="{{ carga_form.archivo_factura.id_for_label }}" class="file-upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span class="file-upload-text">Seleccionar archivo</span>
+                    </label>
+                </div>
+                {% if carga_form.archivo_factura.errors %}
+                    <div class="form-error">{{ carga_form.archivo_factura.errors }}</div>
+                {% endif %}
             </div>
+        </div>
 
-            <!-- Botón para enviar el formulario -->
-            <button type="submit" class="btn btn--primary" id="submit-btn">Registrar Carga</button>
-        </form>
-    </div>
-</main> 
+        <!-- Botón para enviar el formulario -->
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg btn--icon" id="submit-btn">
+                <i class="fas fa-save"></i> Registrar Carga
+            </button>
+        </div>
+    </form>
+</main>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const remisionInput = document.getElementById('id_remision');
-        const remisionStatus = document.getElementById('remision-status');
-        const remisionHelp = document.getElementById('remision-help');
-        let remisionCheckTimeout = null;
+document.addEventListener('DOMContentLoaded', function() {
+    const remisionInput = document.getElementById('id_remision');
+    const remisionStatus = document.getElementById('remision-status');
+    const remisionHelp = document.getElementById('remision-help');
+    let remisionCheckTimeout = null;
 
-        // Obtener el ID del cliente del formulario o URL
-        const clienteId = document.getElementById('id_cliente')?.value || 
-                        window.location.pathname.split('/').filter(Boolean).pop();
+    // Obtener el ID del cliente del formulario o URL
+    const clienteId = document.getElementById('id_cliente')?.value || 
+                    window.location.pathname.split('/').filter(Boolean).pop();
 
-        if (remisionInput && remisionStatus) {
-            remisionInput.addEventListener('input', function() {
-                clearTimeout(remisionCheckTimeout);
+    if (remisionInput && remisionStatus) {
+        remisionInput.addEventListener('input', function() {
+            clearTimeout(remisionCheckTimeout);
+            
+            const remisionValue = this.value.trim();
+            
+            if (remisionValue.length > 0) {
+                remisionStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                remisionStatus.className = 'input-status checking';
+                remisionHelp.textContent = 'Verificando...';
+                remisionHelp.className = 'form-help-text checking';
                 
-                const remisionValue = this.value.trim();
-                
-                if (remisionValue.length > 0) {
-                    remisionStatus.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    remisionHelp.textContent = 'Verificando...';
-                    
-                    remisionCheckTimeout = setTimeout(() => {
-                        fetch(`${window.location.origin}/cargas/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}&cliente_id=${encodeURIComponent(clienteId)}`)
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error(`Error HTTP! estado: ${response.status}`);
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                console.log("Respuesta API:", data);
-                                if (data.exists) {
-                                    remisionStatus.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>';
-                                    remisionHelp.innerHTML = `Esta remisión ya existe para este cliente. <a href="${data.existing_url}" target="_blank">Ver carga existente</a>`;
-                                } else {
-                                    remisionStatus.innerHTML = '<i class="fas fa-check-circle text-success"></i>';
-                                    remisionHelp.textContent = 'Remisión disponible para este cliente';
-                                }
-                            })
-                            .catch(error => {
-                                console.error('Error:', error);
-                                remisionStatus.innerHTML = '<i class="fas fa-times-circle text-danger"></i>';
-                                remisionHelp.innerHTML = `Error al verificar. Intente nuevamente.<br>
-                                    <small class="text-muted">${error.message}</small>`;
-                            });
-                    }, 800);
-                } else {
-                    remisionStatus.innerHTML = '';
-                    remisionHelp.textContent = 'Número único de remisión para este cliente';
-                }
-            });
-        }
-        // Mantener tus otros event listeners para productos
-        const productosContainer = document.getElementById('productos-container');
-        const añadirProductoButton = document.getElementById('añadir-producto');
-        
-        añadirProductoButton.addEventListener('click', function() {
-            const nuevoProducto = document.querySelector('.producto-form').cloneNode(true);
-            nuevoProducto.querySelectorAll('input').forEach(input => input.value = '');
-            productosContainer.appendChild(nuevoProducto);
-        });
-        
-        productosContainer.addEventListener('click', function(event) {
-            if (event.target.classList.contains('eliminar-producto')) {
-                if (document.querySelectorAll('.producto-form').length > 1) {
-                    event.target.parentElement.remove();
-                } else {
-                    alert('Debe haber al menos un producto en la carga');
-                }
+                remisionCheckTimeout = setTimeout(() => {
+                    fetch(`${window.location.origin}/cargas/api/verificar-remision/?remision=${encodeURIComponent(remisionValue)}&cliente_id=${encodeURIComponent(clienteId)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`Error HTTP! estado: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            console.log("Respuesta API:", data);
+                            if (data.exists) {
+                                remisionStatus.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+                                remisionStatus.className = 'input-status error';
+                                remisionHelp.innerHTML = `Esta remisión ya existe para este cliente. <a href="${data.existing_url}" target="_blank">Ver carga existente</a>`;
+                                remisionHelp.className = 'form-help-text error';
+                            } else {
+                                remisionStatus.innerHTML = '<i class="fas fa-check-circle"></i>';
+                                remisionStatus.className = 'input-status success';
+                                remisionHelp.textContent = 'Remisión disponible para este cliente';
+                                remisionHelp.className = 'form-help-text success';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            remisionStatus.innerHTML = '<i class="fas fa-times-circle"></i>';
+                            remisionStatus.className = 'input-status error';
+                            remisionHelp.innerHTML = `Error al verificar. Intente nuevamente.<br>
+                                <small class="text-muted">${error.message}</small>`;
+                            remisionHelp.className = 'form-help-text error';
+                        });
+                }, 800);
+            } else {
+                remisionStatus.innerHTML = '';
+                remisionStatus.className = 'input-status';
+                remisionHelp.textContent = 'Número único de remisión para este cliente';
+                remisionHelp.className = 'form-help-text';
             }
         });
+    }
+
+    // Manejo de productos dinámicos
+    const productosContainer = document.getElementById('productos-container');
+    const añadirProductoButton = document.getElementById('añadir-producto');
+    
+    añadirProductoButton.addEventListener('click', function() {
+        const nuevoProducto = document.querySelector('.product-form').cloneNode(true);
+        nuevoProducto.querySelectorAll('input').forEach(input => input.value = '');
+        productosContainer.appendChild(nuevoProducto);
     });
+    
+    productosContainer.addEventListener('click', function(event) {
+        if (event.target.classList.contains('eliminar-producto') || 
+            event.target.closest('.eliminar-producto')) {
+            const btn = event.target.classList.contains('eliminar-producto') ? 
+                event.target : event.target.closest('.eliminar-producto');
+            if (document.querySelectorAll('.product-form').length > 1) {
+                btn.closest('.product-form').remove();
+            } else {
+                alert('Debe haber al menos un producto en la carga');
+            }
+        }
+    });
+});
 </script>
 {% endblock %}

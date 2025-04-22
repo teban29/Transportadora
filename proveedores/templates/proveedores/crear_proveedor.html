@@ -1,37 +1,84 @@
 {% extends 'base.html' %}
 
 {% block title %}Crear proveedor{% endblock %}
+
 {% block content %}
 <main class="main-content">
-    <header class="content__header">
-        <h1 class="content__title">Crear proveedor</h1>
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">
+            <i class="fas fa-truck"></i> Crear proveedor
+        </h1>
         <div>
-            <a href="{% url 'proveedores' %}" class="btn btn--primary">Volver</a>
+            <a href="{% url 'proveedores' %}" class="btn btn--primary btn--icon">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
         </div>
     </header>
 
     <hr class="divider">
 
-    <form method="post">
+    <form method="post" class="form">
         {% csrf_token %}
         
-        <!-- Campos del formulario en dos columnas -->
-        <div class="form-columns">
+        <!-- Campos del formulario -->
+        <div class="form-grid">
             <div class="form-group">
-                {{ form.nit.label_tag }}
+                <label for="{{ form.nit.id_for_label }}">{{ form.nit.label }}</label>
                 {{ form.nit }}
+                {% if form.nit.errors %}
+                    <div class="form-error">{{ form.nit.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.nombre.label_tag }}
+                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
                 {{ form.nombre }}
+                {% if form.nombre.errors %}
+                    <div class="form-error">{{ form.nombre.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.contacto.label_tag }}
+                <label for="{{ form.contacto.id_for_label }}">{{ form.contacto.label }}</label>
                 {{ form.contacto }}
+                {% if form.contacto.errors %}
+                    <div class="form-error">{{ form.contacto.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
+                {{ form.telefono }}
+                {% if form.telefono.errors %}
+                    <div class="form-error">{{ form.telefono.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="form-error">{{ form.email.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="form-group">
+                <label for="{{ form.direccion.id_for_label }}">{{ form.direccion.label }}</label>
+                {{ form.direccion }}
+                {% if form.direccion.errors %}
+                    <div class="form-error">{{ form.direccion.errors }}</div>
+                {% endif %}
             </div>
         </div>
-        <button type="submit" class="btn btn--primary">Crear</button>
-        <a href="{% url 'proveedores' %}" class="btn btn--primary">Volver</a>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg btn--icon">
+                <i class="fas fa-save"></i> Crear Proveedor
+            </button>
+            <a href="{% url 'proveedores' %}" class="btn btn--danger btn--lg btn--icon">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
     </form>
 </main>
 {% endblock %}

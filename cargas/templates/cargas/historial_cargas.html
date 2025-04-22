@@ -4,12 +4,13 @@
 {% block title %}Historial de Cargas{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
-
 <main class="main-content">
-    <header class="content__header">
-        <h1 class="content__title">Historial de Cargas</h1>
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">
+            <i class="fas fa-history"></i> Historial de Cargas
+        </h1>
         <div class="header-actions">
+            <!-- Espacio reservado para acciones adicionales -->
         </div>
     </header>
 
@@ -17,13 +18,18 @@
 
     <section class="content__body">
         <!-- Filtros -->
-        <div class="card filtros">
+        <div class="filters-card">
+            <div class="card__header">
+                <h3 class="card__title">
+                    <i class="fas fa-filter"></i> Filtros
+                </h3>
+            </div>
             <div class="card__body">
-                <form method="get" class="filtros-form">
-                    <div class="form-columns">
-                        <div class="form-group">
-                            <label for="cliente">Cliente</label>
-                            <select id="cliente" name="cliente" class="form-control">
+                <form method="get" class="filter-form">
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label for="cliente" class="filter-label">Cliente</label>
+                            <select id="cliente" name="cliente" class="filter-select">
                                 <option value="">Todos los clientes</option>
                                 {% for cliente in clientes %}
                                 <option value="{{ cliente.id }}" {% if request.GET.cliente == cliente.id|stringformat:"s" %}selected{% endif %}>
@@ -33,9 +39,9 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
-                            <label for="proveedor">Proveedor</label>
-                            <select id="proveedor" name="proveedor" class="form-control">
+                        <div class="filter-group">
+                            <label for="proveedor" class="filter-label">Proveedor</label>
+                            <select id="proveedor" name="proveedor" class="filter-select">
                                 <option value="">Todos los proveedores</option>
                                 {% for proveedor in proveedores %}
                                 <option value="{{ proveedor.id }}" {% if request.GET.proveedor == proveedor.id|stringformat:"s" %}selected{% endif %}>
@@ -45,24 +51,24 @@
                             </select>
                         </div>
 
-                        <div class="form-group">
-                            <label for="fecha">Fecha exacta</label>
-                            <input type="date" id="fecha" name="fecha" class="form-control" 
+                        <div class="filter-group">
+                            <label for="fecha" class="filter-label">Fecha exacta</label>
+                            <input type="date" id="fecha" name="fecha" class="filter-input" 
                                    value="{{ request.GET.fecha }}">
                         </div>
 
-                        <div class="form-group">
-                            <label for="q">Buscar (nombre/remisión)</label>
-                            <input type="text" id="q" name="q" class="form-control" 
-                                   placeholder="Buscar..." value="{{ request.GET.q }}">
+                        <div class="filter-group">
+                            <label for="q" class="filter-label">Buscar</label>
+                            <input type="text" id="q" name="q" class="filter-input" 
+                                   placeholder="Nombre/Remisión" value="{{ request.GET.q }}">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <button type="submit" class="btn btn--primary">
-                            <i class="fas fa-filter"></i> Filtrar
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn--primary btn--icon">
+                            <i class="fas fa-filter"></i> Aplicar Filtros
                         </button>
-                        <a href="{% url 'historial_cargas' %}" class="btn btn--danger">
+                        <a href="{% url 'historial_cargas' %}" class="btn btn--danger btn--icon">
                             <i class="fas fa-times"></i> Limpiar
                         </a>
                     </div>
@@ -71,10 +77,18 @@
         </div>
 
         <!-- Resultados -->
-        <div class="card">
+        <div class="results-card">
+            <div class="card__header">
+                <h3 class="card__title">
+                    <i class="fas fa-list"></i> Resultados
+                </h3>
+                <span class="card__subtitle">
+                    Mostrando {{ cargas|length }} de {{ total_cargas }} cargas
+                </span>
+            </div>
             <div class="card__body">
-                <div class="table-responsive">
-                    <table class="table">
+                <div class="table-container">
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Nombre</th>
@@ -88,27 +102,34 @@
                         <tbody>
                             {% for carga in cargas %}
                             <tr>
-                                <td>{{ carga.nombre }}</td>
-                                <td>{{ carga.cliente.nombre }}</td>
-                                <td>{{ carga.proveedor.nombre }}</td>
-                                <td>{{ carga.remision }}</td>
-                                <td>{{ carga.fecha|date:"d/m/Y H:i" }}</td>
-                                <td>
-                                    <a href="{% url 'detalle_carga' carga.id %}" class="btn btn--primary btn-sm" title="Ver detalle">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                    {% if carga.archivo_factura %}
-                                    <a href="{{ carga.archivo_factura.url }}" class="btn btn--success btn-sm" title="Descargar factura" download>
-                                        <i class="fas fa-file-invoice-dollar"></i>
-                                    </a>
-                                    {% endif %}
+                                <td data-label="Nombre">{{ carga.nombre }}</td>
+                                <td data-label="Cliente">{{ carga.cliente.nombre }}</td>
+                                <td data-label="Proveedor">{{ carga.proveedor.nombre }}</td>
+                                <td data-label="Remisión">{{ carga.remision }}</td>
+                                <td data-label="Fecha">{{ carga.fecha|date:"d/m/Y H:i" }}</td>
+                                <td data-label="Acciones" class="actions-cell">
+                                    <div class="actions-group">
+                                        <a href="{% url 'detalle_carga' carga.id %}" class="btn btn--primary btn--sm btn--icon" title="Ver detalle" data-toggle="tooltip">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        {% if carga.archivo_factura %}
+                                        <a href="{{ carga.archivo_factura.url }}" class="btn btn--success btn--sm btn--icon" title="Descargar factura" download data-toggle="tooltip">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="6" class="text-center py-4">
-                                    <i class="fas fa-box-open fa-2x mb-3 text-muted"></i>
-                                    <p class="text-muted">No se encontraron cargas</p>
+                                <td colspan="6" class="empty-table">
+                                    <i class="fas fa-box-open empty-table__icon"></i>
+                                    <p class="empty-table__message">No se encontraron cargas</p>
+                                    {% if request.GET %}
+                                    <a href="{% url 'historial_cargas' %}" class="btn btn--primary btn--sm">
+                                        Limpiar filtros
+                                    </a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
@@ -118,25 +139,25 @@
 
                 <!-- Paginación -->
                 {% if is_paginated %}
-                <div class="pagination mt-4">
+                <div class="pagination">
                     {% if page_obj.has_previous %}
-                    <a href="?page=1{% if query_params %}&{{ query_params }}{% endif %}" class="btn btn--primary">
+                    <a href="?page=1{% if query_params %}&{{ query_params }}{% endif %}" class="pagination__link pagination__link--first">
                         &laquo; Primera
                     </a>
-                    <a href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" class="btn btn--primary">
+                    <a href="?page={{ page_obj.previous_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" class="pagination__link pagination__link--prev">
                         Anterior
                     </a>
                     {% endif %}
 
-                    <span class="current">
+                    <span class="pagination__current">
                         Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
                     </span>
 
                     {% if page_obj.has_next %}
-                    <a href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" class="btn btn--primary">
+                    <a href="?page={{ page_obj.next_page_number }}{% if query_params %}&{{ query_params }}{% endif %}" class="pagination__link pagination__link--next">
                         Siguiente
                     </a>
-                    <a href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}" class="btn btn--primary">
+                    <a href="?page={{ page_obj.paginator.num_pages }}{% if query_params %}&{{ query_params }}{% endif %}" class="pagination__link pagination__link--last">
                         Última &raquo;
                     </a>
                     {% endif %}
@@ -150,18 +171,28 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Inicializar tooltips
-    const tooltips = document.querySelectorAll('[title]');
-    tooltips.forEach(el => {
-        el.setAttribute('data-toggle', 'tooltip');
-    });
-    
-    // Opcional: Inicializar tooltips de Bootstrap si los estás usando
-    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
+    const tooltipElements = document.querySelectorAll('[data-toggle="tooltip"]');
+    tooltipElements.forEach(el => {
+        el.addEventListener('mouseenter', function() {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'custom-tooltip';
+            tooltip.textContent = this.getAttribute('title');
+            document.body.appendChild(tooltip);
+            
+            const rect = this.getBoundingClientRect();
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+            tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+            
+            this._tooltip = tooltip;
         });
-    }
+        
+        el.addEventListener('mouseleave', function() {
+            if (this._tooltip) {
+                this._tooltip.remove();
+                this._tooltip = null;
+            }
+        });
+    });
 });
 </script>
 {% endblock %}

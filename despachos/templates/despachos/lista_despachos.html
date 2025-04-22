@@ -5,47 +5,66 @@
 {% block content %}
 
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+
 <main class="main-content">
-    <header class="content__header">
-        <h1 class="content__title">Despachos</h1>
+    <header class="content__header content__header--flex">
+        <div>
+            <h1 class="content__title">
+                <i class="fas fa-truck"></i> Despachos
+            </h1>
+            {% if cliente %}
+            <p class="text-muted">Mostrando despachos para {{ cliente.nombre }}</p>
+            {% endif %}
+        </div>
     </header>
 
     <hr class="divider">
 
     <section class="content__body">
         <!-- Filtros -->
-        <div class="card filtros">
+        <div class="filters-card">
+            <div class="card__header">
+                <h3 class="card__title">
+                    <i class="fas fa-filter"></i> Filtros
+                </h3>
+            </div>
             <div class="card__body">
-                <form method="get" class="filtros-form">
-                    <div class="filtro-group">
-                        <label for="clienteFilter">Cliente</label>
-                        <select id="clienteFilter" class="form-group select" onchange="location = this.value;">
-                            <option value="{% url 'lista_despachos' %}">Todos los clientes</option>
-                            {% for c in clientes %}
-                            <option value="{% url 'lista_despachos_cliente' c.nombre %}" 
-                                    {% if cliente and cliente.nombre == c.nombre %}selected{% endif %}>
-                                {{ c.nombre }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                <form method="get" class="filter-form">
+                    <div class="filter-grid">
+                        <div class="filter-group">
+                            <label for="clienteFilter" class="filter-label">
+                                <i class="fas fa-user"></i> Cliente
+                            </label>
+                            <select id="clienteFilter" class="filter-select" onchange="location = this.value;">
+                                <option value="{% url 'lista_despachos' %}">Todos los clientes</option>
+                                {% for c in clientes %}
+                                <option value="{% url 'lista_despachos_cliente' c.nombre %}" 
+                                        {% if cliente and cliente.nombre == c.nombre %}selected{% endif %}>
+                                    {{ c.nombre }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="estadoFilter" class="filter-label">
+                                <i class="fas fa-info-circle"></i> Estado
+                            </label>
+                            <select id="estadoFilter" class="filter-select" name="estado">
+                                <option value="">Todos los estados</option>
+                                {% for value, label in estados %}
+                                <option value="{{ value }}" {% if request.GET.estado == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
                     </div>
-                    <div class="filtro-group">
-                        <label for="estadoFilter">Estado</label>
-                        <select id="estadoFilter" class="form-group select" name="estado">
-                            <option value="">Todos los estados</option>
-                            {% for value, label in estados %}
-                            <option value="{{ value }}" {% if request.GET.estado == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="filtro-group">
-                        <button type="submit" class="btn btn--primary">
-                            <i class="fas fa-filter"></i> Filtrar
+                    <div class="filter-actions">
+                        <button type="submit" class="btn btn--primary btn--icon">
+                            <i class="fas fa-filter"></i> Aplicar Filtros
                         </button>
                         <a href="{% if cliente %}{% url 'lista_despachos_cliente' cliente.nombre %}{% else %}{% url 'lista_despachos' %}{% endif %}" 
-                           class="btn btn--danger">
+                           class="btn btn--danger btn--icon">
                             <i class="fas fa-sync-alt"></i> Limpiar
                         </a>
                     </div>
@@ -58,26 +77,34 @@
         <div class="card-grid">
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Total Despachos</h3>
-                    <p class="card__text">{{ total_despachos }}</p>
+                    <h3 class="card__title">
+                        <i class="fas fa-truck"></i> Total Despachos
+                    </h3>
+                    <p class="metric-value">{{ total_despachos }}</p>
                 </div>
             </div>
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">En Bodega</h3>
-                    <p class="card__text">{{ en_bodega }}</p>
+                    <h3 class="card__title">
+                        <i class="fas fa-warehouse"></i> En Bodega
+                    </h3>
+                    <p class="metric-value">{{ en_bodega }}</p>
                 </div>
             </div>
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">En Ruta</h3>
-                    <p class="card__text">{{ en_ruta }}</p>
+                    <h3 class="card__title">
+                        <i class="fas fa-road"></i> En Ruta
+                    </h3>
+                    <p class="metric-value">{{ en_ruta }}</p>
                 </div>
             </div>
             <div class="card">
                 <div class="card__body">
-                    <h3 class="card__title">Entregados</h3>
-                    <p class="card__text">{{ entregados }}</p>
+                    <h3 class="card__title">
+                        <i class="fas fa-check-circle"></i> Entregados
+                    </h3>
+                    <p class="metric-value">{{ entregados }}</p>
                 </div>
             </div>
         </div>
@@ -86,9 +113,9 @@
         <!-- Tabla de despachos -->
         <div class="card">
             <div class="card__body">
-                <div class="objects__list">
-                    {% if despachos %}
-                    <table class="table">
+                {% if despachos %}
+                <div class="table-responsive">
+                    <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Guía</th>
@@ -102,12 +129,12 @@
                         <tbody>
                             {% for despacho in despachos %}
                             <tr>
-                                <td>
+                                <td data-label="Guía">
                                     <strong>{{ despacho.guia }}</strong>
                                 </td>
-                                <td>{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</td>
-                                <td>{{ despacho.cliente.nombre }}</td>
-                                <td>
+                                <td data-label="Fecha">{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</td>
+                                <td data-label="Cliente">{{ despacho.cliente.nombre }}</td>
+                                <td data-label="Estado">
                                     <span class="badge 
                                         {% if despacho.estado == 'ENTREGADO' %}bg-success
                                         {% elif despacho.estado == 'RUTA' %}bg-warning
@@ -115,23 +142,23 @@
                                         {{ despacho.get_estado_display }}
                                     </span>
                                 </td>
-                                <td>${{ despacho.valor_flete|floatformat:2 }}</td>
-                                <td>
-                                    <div class="card__actions">
+                                <td data-label="Valor Flete">${{ despacho.valor_flete|floatformat:2 }}</td>
+                                <td data-label="Acciones">
+                                    <div class="actions-group">
                                         <a href="{% url 'detalle_despacho' despacho.pk %}" 
-                                           class="btn btn--primary" 
+                                           class="btn btn--primary btn--sm" 
                                            title="Ver detalle">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {% if despacho.estado == 'BODEGA' %}
                                         <a href="{% url 'cambiar_estado_despacho' despacho.pk 'RUTA' %}" 
-                                           class="btn btn--warning" 
+                                           class="btn btn--warning btn--sm" 
                                            title="Marcar como En Ruta">
                                             <i class="fas fa-truck"></i>
                                         </a>
                                         {% elif despacho.estado == 'RUTA' %}
                                         <a href="{% url 'cambiar_estado_despacho' despacho.pk 'ENTREGADO' %}" 
-                                           class="btn btn--success" 
+                                           class="btn btn--success btn--sm" 
                                            title="Marcar como Entregado">
                                             <i class="fas fa-check-circle"></i>
                                         </a>
@@ -142,35 +169,35 @@
                             {% endfor %}
                         </tbody>
                     </table>
-                    {% else %}
-                    <div class="no-clients">
-                        <div class="no-clients__message">
-                            <i class="fas fa-box-open fa-2x mb-3"></i>
-                            <p>No se encontraron despachos registrados</p>
-                        </div>
-                    </div>
-                    {% endif %}
                 </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <p class="empty-state__message">No se encontraron despachos registrados</p>
+                </div>
+                {% endif %}
 
                 <!-- Paginación -->
                 {% if despachos.has_other_pages %}
                 <div class="pagination">
                     {% if despachos.has_previous %}
-                    <a href="?page=1" class="btn btn--primary">&laquo;&laquo;</a>
-                    <a href="?page={{ despachos.previous_page_number }}" class="btn btn--primary">&laquo;</a>
+                    <a href="?page=1" class="pagination__link">&laquo;&laquo;</a>
+                    <a href="?page={{ despachos.previous_page_number }}" class="pagination__link">&laquo;</a>
                     {% endif %}
 
                     {% for num in despachos.paginator.page_range %}
                         {% if despachos.number == num %}
-                        <a href="#" class="btn btn--primary active">{{ num }}</a>
+                        <span class="pagination__current">{{ num }}</span>
                         {% elif num > despachos.number|add:'-3' and num < despachos.number|add:'3' %}
-                        <a href="?page={{ num }}" class="btn btn--primary">{{ num }}</a>
+                        <a href="?page={{ num }}" class="pagination__link">{{ num }}</a>
                         {% endif %}
                     {% endfor %}
 
                     {% if despachos.has_next %}
-                    <a href="?page={{ despachos.next_page_number }}" class="btn btn--primary">&raquo;</a>
-                    <a href="?page={{ despachos.paginator.num_pages }}" class="btn btn--primary">&raquo;&raquo;</a>
+                    <a href="?page={{ despachos.next_page_number }}" class="pagination__link">&raquo;</a>
+                    <a href="?page={{ despachos.paginator.num_pages }}" class="pagination__link">&raquo;&raquo;</a>
                     {% endif %}
                 </div>
                 {% endif %}
@@ -178,62 +205,6 @@
         </div>
     </section>
 </main>
-
-<style>
-    /* Estilos específicos para despachos */
-    .badge {
-        display: inline-block;
-        padding: 0.35em 0.65em;
-        font-size: 0.75em;
-        font-weight: 700;
-        line-height: 1;
-        color: white;
-        text-align: center;
-        white-space: nowrap;
-        vertical-align: baseline;
-        border-radius: 0.25rem;
-    }
-    
-    .bg-success { background-color: var(--color-success); }
-    .bg-warning { background-color: #ffc107; color: #000; }
-    .bg-secondary { background-color: var(--color-text-light); }
-    
-    .table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .table th, .table td {
-        padding: 12px 15px;
-        text-align: left;
-        border-bottom: 1px solid #ddd;
-    }
-    
-    .table th {
-        background-color: var(--color-primary);
-        color: white;
-    }
-    
-    .table tr:hover {
-        background-color: #f5f5f5;
-    }
-    
-    .pagination {
-        display: flex;
-        justify-content: center;
-        gap: 5px;
-        margin-top: 20px;
-    }
-    
-    .btn--warning {
-        background-color: #ffc107;
-        color: #000;
-    }
-    
-    .btn--warning:hover {
-        background-color: #e0a800;
-    }
-</style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {

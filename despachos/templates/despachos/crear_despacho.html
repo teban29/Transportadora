@@ -6,210 +6,259 @@
 
 <link rel="stylesheet" href="{% static 'css/styles.css' %}">
 <main class="main-content">
-    <header class="content__header">
-        <h1 class="content__title">Crear Despacho para {{ cliente.nombre }}</h1>
-        <a href="{% url 'lista_despachos_cliente' cliente.nombre %}" class="btn btn--primary">
+    <div class="content__header content__header--flex">
+        <div>
+            <h1 class="content__title">
+                <i class="fas fa-truck-loading"></i> Crear Despacho para {{ cliente.nombre }}
+            </h1>
+            <p class="text-muted">Complete los detalles del nuevo despacho</p>
+        </div>
+        <a href="{% url 'lista_despachos_cliente' cliente.nombre %}" class="btn btn--primary btn--icon">
             <i class="fas fa-arrow-left"></i> Volver
         </a>
-    </header>
+    </div>
 
     <hr class="divider">
-            <div class="card__body">
-                <form method="post" id="despacho-form">
-                    {% csrf_token %}
+
+    <div class="card">
+        <div class="card__body">
+            <form method="post" id="despacho-form" class="form">
+                {% csrf_token %}
+                
+                <!-- Información básica del despacho -->
+                <div class="form-section">
+                    <h3 class="form-section__title">
+                        <i class="fas fa-info-circle"></i> Información del Despacho
+                    </h3>
                     
-                    <!-- Información básica del despacho -->
-                    <div class="form-columns">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="{{ despacho_form.valor_flete.id_for_label }}">Valor del Flete</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
+                            <label for="{{ despacho_form.valor_flete.id_for_label }}">
+                                <i class="fas fa-dollar-sign"></i> Valor del Flete
+                            </label>
+                            <div class="input-with-icon">
+                                <i class="fas fa-dollar-sign input-icon"></i>
                                 {{ despacho_form.valor_flete }}
                             </div>
                         </div>
+                        
+                        <div class="form-group">
+                            <label for="{{ despacho_form.observaciones.id_for_label }}">
+                                <i class="fas fa-comment"></i> Observaciones
+                            </label>
+                            {{ despacho_form.observaciones }}
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label for="{{ despacho_form.observaciones.id_for_label }}">Observaciones</label>
-                        {{ despacho_form.observaciones }}
-                    </div>
-                    
-                    <hr class="divider">
-                    
-                    <!-- Productos a despachar -->
-                    <h2 class="section-title">Productos a Despachar</h2>
+                </div>
+                
+                <hr class="divider">
+                
+                <!-- Productos a despachar -->
+                <div class="form-section">
+                    <h3 class="form-section__title">
+                        <i class="fas fa-boxes"></i> Productos a Despachar
+                    </h3>
                     
                     <!-- Selector de carga -->
                     <div class="form-group">
-                        <label for="carga-select">Seleccionar Carga</label>
-                        <select id="carga-select" class="form-group select">
+                        <label for="carga-select">
+                            <i class="fas fa-archive"></i> Seleccionar Carga
+                        </label>
+                        <select id="carga-select" class="filter-select">
                             <option value="" selected disabled>-- Seleccione una carga --</option>
                             {% for carga in cargas_con_inventario %}
-                                <option value="{{ carga.id }}">{{ carga.nombre }} ({{ carga.fecha|date:"d/m/Y" }}) - <strong>Remision: </strong>{{ carga.remision }}</option>
+                                <option value="{{ carga.id }}">{{ carga.nombre }} ({{ carga.fecha|date:"d/m/Y" }}) - Remisión: {{ carga.remision }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     
-
-                    <div id="productos-por-carga" class="mb-4">
+                    <div id="productos-por-carga" class="products-container">
                         {% for carga in cargas_con_inventario %}
-                        <div class="carga-productos" id="carga-{{ carga.id }}" style="display: none;">
-                            <h4>Productos disponibles en {{ carga.nombre }}</h4>
-                            {% if carga.inventario.all %}
-                                <div class="productos-disponibles">
-                                    {% for inventario in carga.inventario.all %}
-                                    <div class="producto-disponible card mb-2">
-                                        <div class="card__body">
-                                            <h5>{{ inventario.producto.nombre }}</h5>
-                                            <p>Disponible: <span class="stock-available">{{ inventario.cantidad_disponible|floatformat:"0" }}</span></p>                                            <button type="button" class="btn btn--primary btn-sm agregar-producto" 
-                                                    data-inventario-id="{{ inventario.id }}"
-                                                    data-producto-name="{{ inventario.producto.nombre }}"
-                                                    data-carga-name="{{ carga.nombre }}"
-                                                    data-disponible="{{ inventario.cantidad_disponible }}">
-                                                <i class="fas fa-plus"></i> Agregar al despacho
-                                            </button>
+                        <div class="carga-productos card" id="carga-{{ carga.id }}" style="display: none;">
+                            <div class="card__header">
+                                <h4 class="card__title">
+                                    <i class="fas fa-pallet"></i> Productos disponibles en {{ carga.nombre }}
+                                </h4>
+                            </div>
+                            
+                            <div class="card__body">
+                                {% if carga.inventario.all %}
+                                    <div class="product-grid">
+                                        {% for inventario in carga.inventario.all %}
+                                        <div class="product-card">
+                                            <div class="card__body">
+                                                <h5 class="card__title">{{ inventario.producto.nombre }}</h5>
+                                                <p class="card__text">
+                                                    <i class="fas fa-box-open"></i> 
+                                                    Disponible: <span class="stock-available">{{ inventario.cantidad_disponible|floatformat:"0" }}</span>
+                                                </p>
+                                                <div class="card__actions">
+                                                    <button type="button" class="btn btn--primary btn--sm agregar-producto" 
+                                                            data-inventario-id="{{ inventario.id }}"
+                                                            data-producto-name="{{ inventario.producto.nombre }}"
+                                                            data-carga-name="{{ carga.nombre }}"
+                                                            data-disponible="{{ inventario.cantidad_disponible }}">
+                                                        <i class="fas fa-plus"></i> Agregar
+                                                    </button>
+                                                </div>
+                                            </div>
                                         </div>
+                                        {% endfor %}
                                     </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-muted">No hay productos disponibles en esta carga</p>
-                            {% endif %}
+                                {% else %}
+                                    <div class="empty-state">
+                                        <div class="empty-state__icon">
+                                            <i class="fas fa-box-open"></i>
+                                        </div>
+                                        <p class="empty-state__message">No hay productos disponibles en esta carga</p>
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
                     
                     <!-- Productos seleccionados -->
-                    <div id="productos-container">
-                        <h4>Productos seleccionados</h4>
-                        <div id="productos-seleccionados">
+                    <div id="productos-container" class="mt-3">
+                        <h4 class="section-title">
+                            <i class="fas fa-clipboard-check"></i> Productos seleccionados
+                        </h4>
+                        <div id="productos-seleccionados" class="product-grid">
                             <!-- Aquí se agregarán dinámicamente los productos seleccionados -->
                         </div>
                     </div>
-                    
-                    <hr class="divider">
-                    
-                    <div class="form-group">
-                        <button type="submit" class="btn btn--primary">
-                            <i class="fas fa-save"></i> Guardar Despacho
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </section>
-</main>
-
-<style>
-    .carga-productos {
-        margin-bottom: 2rem;
-        padding: 1rem;
-        border: 1px solid #eee;
-        border-radius: 8px;
-    }
-    
-    .producto-disponible {
-        transition: all 0.3s ease;
-    }
-    
-    .producto-disponible:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    
-    .producto-seleccionado {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
-        background-color: #f8f9fa;
-        border-radius: 6px;
-    }
-    
-    .producto-seleccionado .info {
-        flex-grow: 1;
-    }
-    
-    .producto-seleccionado .cantidad-input {
-        width: 80px;
-        margin: 0 1rem;
-    }
-</style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const cargaSelect = document.getElementById('carga-select');
-    const productosPorCarga = document.querySelectorAll('.carga-productos');
-    
-    // Mostrar productos de la carga seleccionada
-    cargaSelect.addEventListener('change', function() {
-        productosPorCarga.forEach(div => {
-            div.style.display = 'none';
-        });
-        
-        if (this.value) {
-            document.getElementById(`carga-${this.value}`).style.display = 'block';
-        }
-    });
-    
-    // Contador para índices de productos
-    let productIndex = 0;
-    
-    // Agregar producto al despacho
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('agregar-producto') || 
-            e.target.closest('.agregar-producto')) {
-            
-            const button = e.target.classList.contains('agregar-producto') ? 
-                e.target : e.target.closest('.agregar-producto');
-            
-            const inventarioId = button.getAttribute('data-inventario-id');
-            const productoName = button.getAttribute('data-producto-name');
-            const cargaName = button.getAttribute('data-carga-name');
-            const disponible = button.getAttribute('data-disponible');
-            
-            // Crear elemento para el producto seleccionado
-            const productoHTML = `
-                <div class="producto-seleccionado card" data-index="${productIndex}">
-                    <div class="info">
-                        <strong>${productoName}</strong><br>
-                        <small>Carga: ${cargaName} | Disponible: ${disponible}</small>
-                    </div>
-                    <input type="number" name="items-${productIndex}-cantidad" 
-                           class="form-control cantidad-input" min="1" max="${disponible}" 
-                           value="1" required>
-                    <input type="hidden" name="items-${productIndex}-inventario" value="${inventarioId}">
-                    <button type="button" class="btn btn--danger btn-sm eliminar-producto">
-                        <i class="fas fa-trash"></i>
+                </div>
+                
+                <hr class="divider">
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn--primary btn--lg">
+                        <i class="fas fa-save"></i> Guardar Despacho
                     </button>
                 </div>
-            `;
-            
-            document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productoHTML);
-            productIndex++;
-        }
+            </form>
+        </div>
+    </div>
+</main>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cargaSelect = document.getElementById('carga-select');
+        const productosPorCarga = document.querySelectorAll('.carga-productos');
         
-        // Eliminar producto del despacho
-        if (e.target.classList.contains('eliminar-producto') || 
-            e.target.closest('.eliminar-producto')) {
+        // Mostrar productos de la carga seleccionada
+        cargaSelect.addEventListener('change', function() {
+            productosPorCarga.forEach(div => {
+                div.style.display = 'none';
+            });
             
-            const button = e.target.classList.contains('eliminar-producto') ? 
-                e.target : e.target.closest('.eliminar-producto');
+            if (this.value) {
+                document.getElementById(`carga-${this.value}`).style.display = 'block';
+            }
+        });
+        
+        // Contador para índices de productos
+        let productIndex = 0;
+        
+        // Agregar producto al despacho
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('agregar-producto') || 
+                e.target.closest('.agregar-producto')) {
+                
+                const button = e.target.classList.contains('agregar-producto') ? 
+                    e.target : e.target.closest('.agregar-producto');
+                
+                const inventarioId = button.getAttribute('data-inventario-id');
+                const productoName = button.getAttribute('data-producto-name');
+                const cargaName = button.getAttribute('data-carga-name');
+                const disponible = button.getAttribute('data-disponible');
+                
+                // Crear elemento para el producto seleccionado
+                const productoHTML = `
+                    <div class="producto-seleccionado" data-index="${productIndex}">
+                        <div class="info">
+                            <strong>${productoName}</strong>
+                            <small>Carga: ${cargaName} | Disponible: ${disponible}</small>
+                        </div>
+                        <input type="number" name="items-${productIndex}-cantidad" 
+                               class="cantidad-input" min="1" max="${disponible}" 
+                               value="1" required>
+                        <input type="hidden" name="items-${productIndex}-inventario" value="${inventarioId}">
+                        <button type="button" class="btn btn--danger btn--sm eliminar-producto">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                
+                document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productoHTML);
+                productIndex++;
+            }
             
-            button.closest('.producto-seleccionado').remove();
-        }
+            // Eliminar producto del despacho
+            if (e.target.classList.contains('eliminar-producto') || 
+                e.target.closest('.eliminar-producto')) {
+                
+                const button = e.target.classList.contains('eliminar-producto') ? 
+                    e.target : e.target.closest('.eliminar-producto');
+                
+                button.closest('.producto-seleccionado').remove();
+            }
+        });
+        
+        // Validación antes de enviar
+        document.getElementById('despacho-form').addEventListener('submit', function(e) {
+            const productosSeleccionados = document.querySelectorAll('.producto-seleccionado');
+            if (productosSeleccionados.length === 0) {
+                alert('Debe agregar al menos un producto al despacho');
+                e.preventDefault();
+            }
+        });
+    });
+
+    // Actualizar disponibilidad en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    // Función para actualizar la disponibilidad
+    function actualizarDisponibilidad(inventarioId, cantidadInput) {
+        const cantidad = parseInt(cantidadInput.value) || 0;
+        fetch(`/api/inventario/${inventarioId}/disponibilidad/`)
+            .then(response => response.json())
+            .then(data => {
+                const disponibleElement = document.getElementById(`disponible-${inventarioId}`);
+                if (disponibleElement) {
+                    const disponible = data.disponible;
+                    disponibleElement.textContent = disponible;
+                    
+                    // Resaltar si no hay suficiente
+                    if (cantidad > disponible) {
+                        cantidadInput.classList.add('is-invalid');
+                    } else {
+                        cantidadInput.classList.remove('is-invalid');
+                    }
+                }
+            });
+    }
+    
+    // Escuchar cambios en las cantidades
+    document.querySelectorAll('input[name*="-cantidad"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const inventarioId = this.name.split('-')[2];
+            actualizarDisponibilidad(inventarioId, this);
+        });
+        
+        input.addEventListener('input', function() {
+            const inventarioId = this.name.split('-')[2];
+            actualizarDisponibilidad(inventarioId, this);
+        });
     });
     
-    // Validación antes de enviar
-    document.getElementById('despacho-form').addEventListener('submit', function(e) {
-        const productosSeleccionados = document.querySelectorAll('.producto-seleccionado');
-        if (productosSeleccionados.length === 0) {
-            alert('Debe agregar al menos un producto al despacho');
-            e.preventDefault();
+    // Actualizar todos al cargar
+    document.querySelectorAll('select[name*="-inventario"]').forEach(select => {
+        const inventarioId = select.value;
+        const cantidadInput = document.querySelector(`input[name="items-${select.name.split('-')[1]}-cantidad"]`);
+        if (inventarioId && cantidadInput) {
+            actualizarDisponibilidad(inventarioId, cantidadInput);
         }
     });
 });
-</script>
-
-{% endblock %}
+    </script>
+    
+    {% endblock %}

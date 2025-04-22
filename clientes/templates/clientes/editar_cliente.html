@@ -3,81 +3,120 @@
 {% block title %}Editar cliente{% endblock %}
 {% block content %}
 <main class="main-content">
-    <header class="content__header">
-        <h1 class="content__title">Editar cliente</h1>
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">Editar cliente: {{ cliente.nombre }}</h1>
         <div>
-            <a href="{% url 'clientes' %}" class="btn btn--primary">Volver</a>
+            <a href="{% url 'clientes' %}" class="btn btn--primary btn--icon">
+                <i class="fas fa-arrow-left"></i> Volver
+            </a>
         </div>
     </header>
 
     <hr class="divider">
 
-    <form method="post">
+    <form method="post" class="form">
         {% csrf_token %}
         
         <!-- Campos del formulario en dos columnas -->
-        <div class="form-columns">
+        <div class="form-grid">
             <div class="form-group">
-                {{ form.nit.label_tag }}
+                <label for="{{ form.nit.id_for_label }}">{{ form.nit.label }}</label>
                 {{ form.nit }}
+                {% if form.nit.errors %}
+                    <div class="form-error">{{ form.nit.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.nombre.label_tag }}
+                <label for="{{ form.nombre.id_for_label }}">{{ form.nombre.label }}</label>
                 {{ form.nombre }}
+                {% if form.nombre.errors %}
+                    <div class="form-error">{{ form.nombre.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.email.label_tag }}
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
                 {{ form.email }}
+                {% if form.email.errors %}
+                    <div class="form-error">{{ form.email.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.telefono.label_tag }}
+                <label for="{{ form.telefono.id_for_label }}">{{ form.telefono.label }}</label>
                 {{ form.telefono }}
+                {% if form.telefono.errors %}
+                    <div class="form-error">{{ form.telefono.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.ciudad.label_tag }}
+                <label for="{{ form.ciudad.id_for_label }}">{{ form.ciudad.label }}</label>
                 {{ form.ciudad }}
+                {% if form.ciudad.errors %}
+                    <div class="form-error">{{ form.ciudad.errors }}</div>
+                {% endif %}
             </div>
+            
             <div class="form-group">
-                {{ form.direccion.label_tag }}
+                <label for="{{ form.direccion.id_for_label }}">{{ form.direccion.label }}</label>
                 {{ form.direccion }}
+                {% if form.direccion.errors %}
+                    <div class="form-error">{{ form.direccion.errors }}</div>
+                {% endif %}
             </div>
-        </div>  
+        </div>
 
         <!-- Campo de selección de proveedores -->
-        <div class="form-group">
-            <label for="proveedores">Seleccionar proveedores:</label>
-            <div id="proveedores-container">
+        <div class="form-section">
+            <h3 class="form-section__title">Proveedores asociados</h3>
+            <div id="proveedores-container" class="form-section__content">
                 {% for proveedor in cliente.proveedores.all %}
                 <div class="proveedor-form card">
                     <div class="form-group">
-                        <select name="proveedores[]" class="proveedor-select" required>
+                        <label>Proveedor</label>
+                        <select name="proveedores[]" class="form-select proveedor-select" required>
                             <option value="" disabled>Seleccione un proveedor</option>
                             {% for p in proveedores %}
                                 <option value="{{ p.id }}" {% if p.id == proveedor.id %}selected{% endif %}>{{ p.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="button" class="btn btn--danger eliminar-proveedor">Eliminar</button>
+                    <button type="button" class="btn btn--danger btn--sm eliminar-proveedor">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
                 </div>
                 {% empty %}
                 <div class="proveedor-form card">
                     <div class="form-group">
-                        <select name="proveedores[]" class="proveedor-select" required>
+                        <label>Proveedor</label>
+                        <select name="proveedores[]" class="form-select proveedor-select" required>
                             <option value="" disabled selected>Seleccione un proveedor</option>
                             {% for p in proveedores %}
                                 <option value="{{ p.id }}">{{ p.nombre }}</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <button type="button" class="btn btn--danger eliminar-proveedor">Eliminar</button>
+                    <button type="button" class="btn btn--danger btn--sm eliminar-proveedor">
+                        <i class="fas fa-trash-alt"></i> Eliminar
+                    </button>
                 </div>
                 {% endfor %}
             </div>
-            <!-- Botón para agregar más proveedores -->
-            <button type="button" id="añadir-proveedor" class="btn btn--success">Añadir Proveedor</button>
+            <button type="button" id="añadir-proveedor" class="btn btn--success btn--icon">
+                <i class="fas fa-plus"></i> Añadir Proveedor
+            </button>
         </div>
-        <button type="submit" class="btn btn--primary">Guardar cambios</button>
-        <a href="{% url 'clientes' %}" class="btn btn--danger">Cancelar</a>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn--primary btn--lg">
+                <i class="fas fa-save"></i> Guardar cambios
+            </button>
+            <a href="{% url 'clientes' %}" class="btn btn--danger btn--lg">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </div>
     </form>
 </main>
 
@@ -122,8 +161,11 @@
         
         // Función para eliminar un campo de proveedor
         proveedoresContainer.addEventListener('click', function(event) {
-            if (event.target.classList.contains('eliminar-proveedor')) {
-                event.target.parentElement.remove();
+            if (event.target.classList.contains('eliminar-proveedor') || 
+                event.target.closest('.eliminar-proveedor')) {
+                const btn = event.target.classList.contains('eliminar-proveedor') ? 
+                    event.target : event.target.closest('.eliminar-proveedor');
+                btn.parentElement.remove();
                 actualizarOpciones();
             }
         });

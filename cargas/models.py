@@ -43,13 +43,11 @@ class InventarioCarga(models.Model):
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name='inventario')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField()
-    codigo_barras = models.ImageField(upload_to='codigos_barras/', blank=True, null=False)
-    
     
     @property
     def cantidad_disponible(self):
-        """Calcula la cantidad disponible basada en despachos"""
-        total_despachado = self.itemdespacho_set.aggregate(
+        """Calcula dinámicamente la cantidad disponible"""
+        total_despachado = self.items_despacho.aggregate(
             total=Sum('cantidad')
         )['total'] or 0
         return max(0, self.cantidad - total_despachado)
@@ -61,8 +59,9 @@ class InventarioCarga(models.Model):
             if cantidad <= 0:
                 raise ValueError("La cantidad debe ser mayor a cero")
             
-            if cantidad > self.cantidad_disponible:
-                raise ValueError(f"No hay suficiente stock (Disponible: {self.cantidad_disponible})")
+            disponible = self.cantidad_disponible
+            if cantidad > disponible:
+                raise ValueError(f"No hay suficiente stock (Disponible: {disponible})")
             return True
                 
         except (TypeError, ValueError) as e:

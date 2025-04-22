@@ -1,41 +1,279 @@
 {% extends 'base.html' %}
 
-{% block content %}
-<h1>Lista de Usuarios</h1>
-<a href="{% url 'user_create' %}">Crear Usuario</a>
+{% block title %}Usuarios - Administración{% endblock %}
 
-<table>
-    <thead>
-        <tr>
-            <th>Usuario</th>
-            <th>Nombre</th>
-            <th>Email</th>
-            <th>Grupos</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.get_full_name }}</td>
-            <td>{{ user.email }}</td>
-            <td>
-                {% for group in user.groups.all %}
-                    {{ group.name }}{% if not forloop.last %}, {% endif %}
-                {% endfor %}
-            </td>
-            <td>{% if user.is_active %}Activo{% else %}Inactivo{% endif %}</td>
-            <td>
-                <a href="{% url 'user_update' user.pk %}">Editar</a>
-                <a href="{% url 'user_password' user.pk %}">Contraseña</a>
-                {% if user.is_active %}
-                    <a href="{% url 'user_delete' user.pk %}">Desactivar</a>
+{% block content %}
+<main class="main-content">
+    <header class="content__header content__header--flex">
+        <h1 class="content__title">
+            <i class="fas fa-users-cog"></i> Gestión de Usuarios
+        </h1>
+        <a href="{% url 'user_create' %}" class="btn btn--success btn--icon">
+            <i class="fas fa-plus"></i> Nuevo Usuario
+        </a>
+    </header>
+
+    <hr class="divider">
+
+    <div class="card">
+        <div class="card__header card__header--with-tools">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="user-search" placeholder="Buscar usuarios..." class="search-input">
+            </div>
+            <div class="card__count">
+                <i class="fas fa-users"></i> {{ users|length }} usuario{{ users|pluralize }}
+            </div>
+        </div>
+
+        <div class="card__body">
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Email</th>
+                            <th>Grupos</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="user-row" data-username="{{ user.username|lower }}" 
+                            data-name="{{ user.get_full_name|lower }}" 
+                            data-email="{{ user.email|lower }}">
+                            <td data-label="Usuario">
+                                <div class="user-avatar">
+                                    <i class="fas fa-user-circle"></i>
+                                    <span>{{ user.username }}</span>
+                                </div>
+                            </td>
+                            <td data-label="Nombre">{{ user.get_full_name|default:"-" }}</td>
+                            <td data-label="Email">{{ user.email }}</td>
+                            <td data-label="Grupos">
+                                <div class="groups-container">
+                                    {% for group in user.groups.all %}
+                                    <span class="badge badge--group">{{ group.name }}</span>
+                                    {% empty %}
+                                    <span class="text-muted">Sin grupos</span>
+                                    {% endfor %}
+                                </div>
+                            </td>
+                            <td data-label="Estado">
+                                <div class="status-toggle">
+                                    <span class="status-text {% if user.is_active %}text-success{% else %}text-danger{% endif %}">
+                                        {% if user.is_active %}
+                                        <i class="fas fa-check-circle"></i> Activo
+                                        {% else %}
+                                        <i class="fas fa-times-circle"></i> Inactivo
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </td>
+                            <td data-label="Acciones">
+                                <div class="actions-group">
+                                    <a href="{% url 'user_update' user.pk %}" class="btn btn--primary btn--sm btn--icon" title="Editar" data-toggle="tooltip">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'user_password' user.pk %}" class="btn btn--warning btn--sm btn--icon" title="Cambiar contraseña" data-toggle="tooltip">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card__footer">
+            {% if is_paginated %}
+            <div class="pagination">
+                {% if page_obj.has_previous %}
+                <a href="?page=1" class="pagination__link pagination__link--first">
+                    <i class="fas fa-angle-double-left"></i>
+                </a>
+                <a href="?page={{ page_obj.previous_page_number }}" class="pagination__link pagination__link--prev">
+                    <i class="fas fa-angle-left"></i>
+                </a>
                 {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+
+                <span class="pagination__current">
+                    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}" class="pagination__link pagination__link--next">
+                    <i class="fas fa-angle-right"></i>
+                </a>
+                <a href="?page={{ page_obj.paginator.num_pages }}" class="pagination__link pagination__link--last">
+                    <i class="fas fa-angle-double-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</main>
+
+<!-- Modal de confirmación -->
+<div id="delete-modal" class="modal">
+    <div class="modal__content">
+        <div class="modal__header">
+            <h3 class="modal__title">Confirmar eliminación</h3>
+            <button class="modal__close">&times;</button>
+        </div>
+        <div class="modal__body">
+            <p>¿Estás seguro de que deseas eliminar al usuario <strong id="modal-username"></strong>?</p>
+            <p class="text-danger">Esta acción no se puede deshacer.</p>
+        </div>
+        <div class="modal__footer">
+            <button id="confirm-delete" class="btn btn--danger">Eliminar</button>
+            <button id="cancel-delete" class="btn btn--secondary">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Búsqueda de usuarios
+    const userSearch = document.getElementById('user-search');
+    const userRows = document.querySelectorAll('.user-row');
+    
+    userSearch.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        
+        userRows.forEach(row => {
+            const matches = (
+                row.dataset.username.includes(searchTerm) || 
+                row.dataset.name.includes(searchTerm) || 
+                row.dataset.email.includes(searchTerm)
+            );
+            row.style.display = matches ? '' : 'none';
+        });
+    });
+
+    // Toggle de estado de usuario
+    const toggleSwitches = document.querySelectorAll('.toggle-status');
+    
+    toggleSwitches.forEach(switchElement => {
+        switchElement.addEventListener('change', function() {
+            const userId = this.dataset.userId;
+            const isActive = this.checked;
+            const statusText = this.closest('.status-toggle').querySelector('.status-text');
+            const icon = statusText.querySelector('i');
+            
+            fetch(`/accounts/users/${userId}/toggle/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({is_active: isActive})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    statusText.className = `status-text text-${isActive ? 'success' : 'danger'}`;
+                    icon.className = `fas fa-${isActive ? 'check' : 'times'}-circle`;
+                    statusText.innerHTML = `<i class="fas fa-${isActive ? 'check' : 'times'}-circle"></i> ${isActive ? 'Activo' : 'Inactivo'}`;
+                    
+                    showNotification(`Usuario ${isActive ? 'activado' : 'desactivado'} correctamente`, 'success');
+                } else {
+                    this.checked = !isActive;
+                    showNotification(data.error || 'Error al actualizar el estado', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                this.checked = !isActive;
+                showNotification('Error de conexión', 'error');
+            });
+        });
+    });
+
+    // Eliminar usuario (con modal)
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+    const deleteModal = document.getElementById('delete-modal');
+    const modalUsername = document.getElementById('modal-username');
+    const confirmDeleteBtn = document.getElementById('confirm-delete');
+    const cancelDeleteBtn = document.getElementById('cancel-delete');
+    let currentUserIdToDelete = null;
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            currentUserIdToDelete = this.dataset.userId;
+            modalUsername.textContent = this.dataset.userName;
+            deleteModal.style.display = 'flex';
+        });
+    });
+    
+    confirmDeleteBtn.addEventListener('click', function() {
+        if (!currentUserIdToDelete) return;
+        
+        const row = document.querySelector(`.btn-delete[data-user-id="${currentUserIdToDelete}"]`).closest('tr');
+        row.classList.add('deleting-row');
+        
+        fetch(`/accounts/users/${currentUserIdToDelete}/delete/`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showNotification('Usuario eliminado correctamente', 'success');
+                setTimeout(() => row.remove(), 300);
+            } else {
+                row.classList.remove('deleting-row');
+                showNotification(data.error || 'Error al eliminar usuario', 'error');
+            }
+            deleteModal.style.display = 'none';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            row.classList.remove('deleting-row');
+            showNotification('Error de conexión', 'error');
+            deleteModal.style.display = 'none';
+        });
+    });
+    
+    cancelDeleteBtn.addEventListener('click', function() {
+        deleteModal.style.display = 'none';
+    });
+    
+    document.querySelector('.modal__close').addEventListener('click', function() {
+        deleteModal.style.display = 'none';
+    });
+    
+    window.addEventListener('click', function(event) {
+        if (event.target === deleteModal) {
+            deleteModal.style.display = 'none';
+        }
+    });
+
+    // Mostrar notificación
+    function showNotification(message, type) {
+        const notification = document.createElement('div');
+        notification.className = `notification notification--${type}`;
+        notification.innerHTML = `
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            ${message}
+        `;
+        
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.classList.add('fade-out');
+            setTimeout(() => notification.remove(), 300);
+        }, 3000);
+    }
+});
+</script>
 {% endblock %}

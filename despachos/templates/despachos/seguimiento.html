@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% load static %}
+{% block title %}Seguimiento de Despachos{% endblock %}
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+<link rel="stylesheet" href="{% static 'css/seguimiento.css' %}">
+
+<div class="public-container">
+    <div class="tracking-card card">
+        <h1 class="content__title">
+            <i class="fas fa-truck"></i> Seguimiento de Despachos
+        </h1>
+        <p class="intro-text text-muted">
+            Ingresa tu número de guía para consultar el estado de tu despacho
+        </p>
+        
+        <form method="post" class="tracking-form form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="guia">
+                    <i class="fas fa-barcode"></i> Número de Guía:
+                </label>
+                <input type="text" id="guia" name="guia" 
+                       value="{{ guia }}" placeholder="Ej: ABC-12345678" required
+                       class="form-control filter-input">
+                {% if error %}
+                    <div class="form-error">
+                        <i class="fas fa-exclamation-circle"></i> {{ error }}
+                    </div>
+                {% endif %}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn--primary btn--icon">
+                    <i class="fas fa-search"></i> Consultar
+                </button>
+            </div>
+        </form>
+        
+        {% if despacho %}
+        <div class="tracking-result">
+            <!-- Timeline de estados -->
+            <div class="status-timeline">
+                <div class="status-item {% if despacho.estado == 'BODEGA' %}current{% endif %}">
+                    <div class="status-icon">
+                        <i class="fas fa-warehouse"></i>
+                    </div>
+                    <div class="status-info">
+                        <h4>En Bodega</h4>
+                        {% if despacho.estado != 'BODEGA' %}
+                        <small>Preparado para despacho</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="status-item {% if despacho.estado == 'RUTA' %}current{% endif %}">
+                    <div class="status-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div class="status-info">
+                        <h4>En Ruta</h4>
+                        {% if despacho.estado == 'ENTREGADO' %}
+                        <small>En transporte</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="status-item {% if despacho.estado == 'ENTREGADO' %}current{% endif %}">
+                    <div class="status-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="status-info">
+                        <h4>Entregado</h4>
+                        {% if despacho.estado == 'ENTREGADO' %}
+                        <small>Despacho completado</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Información del despacho -->
+            <div class="detail-grid">
+                <div class="detail-group">
+                    <span class="detail-label">Guía:</span>
+                    <p class="detail-value">{{ despacho.guia }}</p>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Cliente:</span>
+                    <p class="detail-value">{{ despacho.cliente.nombre }}</p>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Fecha de Creación:</span>
+                    <p class="detail-value">{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                </div>
+                <div class="detail-group">
+                    <span class="detail-label">Valor del Flete:</span>
+                    <p class="detail-value">${{ despacho.valor_flete|floatformat:2 }}</p>
+                </div>
+                {% if despacho.observaciones %}
+                <div class="detail-group detail-group--full">
+                    <span class="detail-label">Observaciones:</span>
+                    <p class="detail-value">{{ despacho.observaciones }}</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <!-- Productos del despacho -->
+            <div class="products-section">
+                <h3 class="section-title">
+                    <i class="fas fa-boxes"></i> Productos Despachados
+                </h3>
+                
+                {% if items %}
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Cantidad</th>
+                                <th>Carga de Origen</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr>
+                                <td>{{ item.inventario.producto.nombre }}</td>
+                                <td>{{ item.cantidad }}</td>
+                                <td>{{ item.inventario.carga.nombre }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state__icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <p class="empty-state__message">No hay productos registrados en este despacho</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
