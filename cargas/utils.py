@@ -9,6 +9,7 @@ from reportlab.lib.pagesizes import landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Paragraph
 from reportlab.lib.enums import TA_CENTER
+from django.utils import timezone
 
 def generar_codigo_barras_unico(inventario):
     """
@@ -34,6 +35,11 @@ def generar_codigo_barras_unico(inventario):
         f"{inventario.carga.remision}"
     )
     
+    #guardar el codigo de barras en la base de datos
+    inventario.codigo_barras = codigo_unico
+    inventario.fecha_generacion_codigo = timezone.now()
+    inventario.save()
+    
     # Generar imagen del código de barras (usando archivo temporal) - RESTO SIN CAMBIOS
     try:
         with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as temp_file:
@@ -58,7 +64,7 @@ def generar_codigo_barras_unico(inventario):
         info_height = inner_height - barcode_height - header_height - 5*mm
         
         c.setFont("Helvetica-Bold", 14)
-        c.drawCentredString(pdf_width/2, margin + inner_height - 12*mm, "CONTROL DE INVENTARIO")
+        c.drawCentredString(pdf_width/2, margin + inner_height - 12*mm, "TRANSPORTADORA TC")
         
         barcode_y = margin + info_height + 5*mm
         c.drawImage(temp_path, 

@@ -43,6 +43,8 @@ class InventarioCarga(models.Model):
     carga = models.ForeignKey(Carga, on_delete=models.CASCADE, related_name='inventario')
     producto = models.ForeignKey(Producto, on_delete=models.CASCADE)
     cantidad = models.IntegerField()
+    codigo_barras = models.CharField(max_length=100, blank=True, null=True)
+    fecha_generacion_codigo = models.DateTimeField(blank=True, null=True)
     
     @property
     def cantidad_disponible(self):

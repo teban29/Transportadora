@@ -9,7 +9,11 @@ urlpatterns = [
     path('crear/cliente/<str:cliente_nombre>/', views.crear_despacho, name='crear_despacho'),
     path('<int:pk>/cambiar-estado/<str:nuevo_estado>/', views.cambiar_estado_despacho, name='cambiar_estado_despacho'),
     
+    #escaneo de códigos de barras
+    path('<str:cliente_nombre>/escanear/', views.escanear_codigo_barras, name='escanear_codigo_barras'),
+    
     #URLS para seguimiento de despachos
     path('seguimiento/', views.seguimiento_despacho, name='seguimiento-despacho'),
-    path('seguimiento/<str:guia>/', views.detalle_seguimiento, name='detalle-seguimiento'),
+    path('seguimiento/<str:guia>/', views.detalle_seguimiento, name='detalle-seguimiento'),\
+    
 ]

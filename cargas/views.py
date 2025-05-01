@@ -184,16 +184,18 @@ def generar_codigo_barras_producto(request, inventario_id):
     inventario = get_object_or_404(InventarioCarga, id=inventario_id)
     
     try:
+        if not inventario.codigo_barras:
+            messages.info(request, "Generando nuevo codigo de barras...")
+        
         pdf_buffer = generar_codigo_barras_unico(inventario)
-        response = HttpResponse(
-            pdf_buffer.getvalue(),
-            content_type='application/pdf'
-        )
+        response = HttpResponse(pdf_buffer.getvalue(),content_type='aplication/pdf')
         filename = f"CODIGO_{inventario.producto.nombre}_{inventario.carga.nombre}.pdf"
-        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        response['Content-Disposition']= f'inline; filename="{filename}"'
         return response
+    
     except Exception as e:
-        return HttpResponse(f"Error generando código: {str(e)}", status=500)
+        messages.error(request, f"Error enerando codigo: {str(e)}")
+        return redirect('detalle_carga', carga_id=inventario.carga.id)
 
 
 @require_GET

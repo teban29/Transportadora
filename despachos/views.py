@@ -10,6 +10,11 @@ from django.db.models import Prefetch, F, Sum
 from django.db.models.functions import Coalesce
 from django.views.decorators.http import require_http_methods
 from django.urls import reverse
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+
 
 def lista_despachos(request, cliente_nombre=None):
     """Lista todos los despachos, con filtro opcional por cliente"""
@@ -180,3 +185,52 @@ def detalle_seguimiento(request, guia):
         'despacho': despacho,
         'items': items
     })
+    
+
+@csrf_exempt
+def escanear_codigo_barras(request, cliente_nombre):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            codigo = data.get('codigo')
+            
+            # Parsear el código según el formato que generamos (cliente|producto|carga|remisión)
+            partes = codigo.split('|')
+            if len(partes) != 4:
+                return JsonResponse({'error': 'Formato de código inválido'}, status=400)
+            
+            cliente, producto_nombre, carga_nombre, remision = partes
+            
+            # Verificar que el cliente coincida
+            cliente_obj = get_object_or_404(Cliente, nombre=cliente)
+            if cliente_obj.nombre != cliente_nombre:
+                return JsonResponse({'error': 'El producto no pertenece a este cliente'}, status=400)
+            
+            # Buscar el inventario correspondiente
+            inventario = InventarioCarga.objects.filter(
+                carga__nombre=carga_nombre,
+                carga__remision=remision,
+                producto__nombre=producto_nombre
+            ).annotate(
+                disponible=F('cantidad') - Coalesce(Sum('items_despacho__cantidad'), 0)
+            ).first()
+            
+            if not inventario:
+                return JsonResponse({'error': 'Producto no encontrado en inventario'}, status=404)
+            
+            if inventario.disponible <= 0:
+                return JsonResponse({'error': 'No hay unidades disponibles'}, status=400)
+            
+            # Devolver los datos del producto
+            return JsonResponse({
+                'inventario_id': inventario.id,
+                'producto': inventario.producto.nombre,
+                'carga': inventario.carga.nombre,
+                'disponible': inventario.disponible,
+                'remision': inventario.carga.remision
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Método no permitido'}, status=405)

@@ -2,9 +2,8 @@
 
 {% load static %}
 {% block title %}Crear Despacho - {{ cliente.nombre }}{% endblock %}
-{% block content %}
 
-<link rel="stylesheet" href="{% static 'css/styles.css' %}">
+{% block content %}
 <main class="main-content">
     <div class="content__header content__header--flex">
         <div>
@@ -58,6 +57,31 @@
                     <h3 class="form-section__title">
                         <i class="fas fa-boxes"></i> Productos a Despachar
                     </h3>
+                    
+                    <!-- Sección de escaneo -->
+                    <div class="card mb-4">
+                        <div class="card__header">
+                            <h4 class="card__title">
+                                <i class="fas fa-barcode"></i> Escanear Códigos de Barras
+                            </h4>
+                        </div>
+                        <div class="card__body">
+                            <div class="scanner-container">
+                                <button id="start-scanner" class="btn btn--primary">
+                                    <i class="fas fa-camera"></i> Activar Escáner
+                                </button>
+                                <div id="scanner-preview" style="display: none; width: 100%; max-width: 500px; margin: 1rem auto;"></div>
+                                <div class="mt-3">
+                                    <p class="text-muted">O ingrese manualmente:</p>
+                                    <div class="input-group">
+                                        <input type="text" id="manual-barcode" class="form-control" placeholder="Código de barras">
+                                        <button id="add-manual" class="btn btn--secondary">Agregar</button>
+                                    </div>
+                                </div>
+                                <div id="scanner-result" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <!-- Selector de carga -->
                     <div class="form-group">
@@ -140,125 +164,252 @@
         </div>
     </div>
 </main>
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/webrtc-adapter@7.7.0/adapter.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const cargaSelect = document.getElementById('carga-select');
-        const productosPorCarga = document.querySelectorAll('.carga-productos');
+document.addEventListener('DOMContentLoaded', function() {
+    // Variables globales
+    const scannerBtn = document.getElementById('start-scanner');
+    const scannerPreview = document.getElementById('scanner-preview');
+    const scannerResult = document.getElementById('scanner-result');
+    const manualBarcode = document.getElementById('manual-barcode');
+    const addManualBtn = document.getElementById('add-manual');
+    let scannerActive = false;
+    let productIndex = document.querySelectorAll('.producto-seleccionado').length;
+
+    // Función para mostrar mensajes
+    function showMessage(message, isError = false) {
+        scannerResult.innerHTML = `
+            <div class="${isError ? 'alert-danger' : 'alert-success'}">
+                <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                ${message}
+            </div>
+        `;
+        setTimeout(() => scannerResult.innerHTML = '', 3000);
+    }
+
+    // Función para verificar soporte de cámara
+    async function checkCameraAccess() {
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('Tu navegador no soporta acceso a la cámara');
+            }
+            
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach(track => track.stop());
+            return true;
+        } catch (error) {
+            console.error('Error en cámara:', error);
+            if (error.name === 'NotAllowedError') {
+                throw new Error('Permiso de cámara denegado. Por favor habilítalo manualmente.');
+            } else if (error.name === 'NotFoundError') {
+                throw new Error('No se encontró cámara disponible');
+            } else {
+                throw new Error('No se puede acceder a la cámara: ' + error.message);
+            }
+        }
+    }
+
+    // Función para agregar producto
+    function addProduct(inventarioId, productoName, cargaName, disponible) {
+        // Verificar si ya existe
+        const existingInput = document.querySelector(`input[name*="-inventario"][value="${inventarioId}"]`);
+        if (existingInput) {
+            const cantidadInput = existingInput.closest('.producto-seleccionado').querySelector('.cantidad-input');
+            const newValue = parseInt(cantidadInput.value) + 1;
+            cantidadInput.value = Math.min(newValue, disponible);
+            showMessage(`Cantidad aumentada para ${productoName}`);
+            return;
+        }
+
+        // Crear nuevo elemento
+        const productHTML = `
+            <div class="producto-seleccionado" data-index="${productIndex}">
+                <div class="info">
+                    <strong>${productoName}</strong>
+                    <small>Carga: ${cargaName} | Disponible: ${disponible}</small>
+                </div>
+                <input type="number" name="items-${productIndex}-cantidad" 
+                       class="cantidad-input" min="1" max="${disponible}" 
+                       value="1" required>
+                <input type="hidden" name="items-${productIndex}-inventario" value="${inventarioId}">
+                <button type="button" class="btn btn--danger btn--sm eliminar-producto">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
         
-        // Mostrar productos de la carga seleccionada
-        cargaSelect.addEventListener('change', function() {
-            productosPorCarga.forEach(div => {
-                div.style.display = 'none';
+        document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productHTML);
+        productIndex++;
+        showMessage(`Producto ${productoName} agregado`);
+    }
+
+    // Función para procesar código escaneado
+    async function processBarcode(code) {
+        try {
+            showMessage("Procesando código...");
+            
+            const response = await fetch(`/despachos/${encodeURIComponent('{{ cliente.nombre }}')}/escanear/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({ codigo: code })
             });
             
-            if (this.value) {
-                document.getElementById(`carga-${this.value}`).style.display = 'block';
-            }
-        });
-        
-        // Contador para índices de productos
-        let productIndex = 0;
-        
-        // Agregar producto al despacho
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('agregar-producto') || 
-                e.target.closest('.agregar-producto')) {
-                
-                const button = e.target.classList.contains('agregar-producto') ? 
-                    e.target : e.target.closest('.agregar-producto');
-                
-                const inventarioId = button.getAttribute('data-inventario-id');
-                const productoName = button.getAttribute('data-producto-name');
-                const cargaName = button.getAttribute('data-carga-name');
-                const disponible = button.getAttribute('data-disponible');
-                
-                // Crear elemento para el producto seleccionado
-                const productoHTML = `
-                    <div class="producto-seleccionado" data-index="${productIndex}">
-                        <div class="info">
-                            <strong>${productoName}</strong>
-                            <small>Carga: ${cargaName} | Disponible: ${disponible}</small>
-                        </div>
-                        <input type="number" name="items-${productIndex}-cantidad" 
-                               class="cantidad-input" min="1" max="${disponible}" 
-                               value="1" required>
-                        <input type="hidden" name="items-${productIndex}-inventario" value="${inventarioId}">
-                        <button type="button" class="btn btn--danger btn--sm eliminar-producto">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productoHTML);
-                productIndex++;
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
             }
             
-            // Eliminar producto del despacho
-            if (e.target.classList.contains('eliminar-producto') || 
-                e.target.closest('.eliminar-producto')) {
+            addProduct(data.inventario_id, data.producto, data.carga, data.disponible);
+            
+        } catch (error) {
+            console.error("Error:", error);
+            showMessage(error.message, true);
+        }
+    }
+
+    // Control del escáner
+    scannerBtn.addEventListener('click', async function() {
+        if (scannerActive) {
+            Quagga.stop();
+            scannerPreview.style.display = 'none';
+            scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+            scannerActive = false;
+            return;
+        }
+
+        scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+        scannerBtn.disabled = true;
+
+        try {
+            // Verificar acceso a cámara primero
+            await checkCameraAccess();
+            
+            scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+            
+            Quagga.init({
+                inputStream: {
+                    name: "Live",
+                    type: "LiveStream",
+                    target: scannerPreview,
+                    constraints: {
+                        width: { min: 640, ideal: 1280, max: 1920 },
+                        height: { min: 480, ideal: 720, max: 1080 },
+                        facingMode: "environment"
+                    },
+                },
+                decoder: {
+                    readers: ["code_128_reader"]
+                },
+                locate: true,
+                numOfWorkers: navigator.hardwareConcurrency || 4,
+                debug: {
+                    drawBoundingBox: false,
+                    showFrequency: false,
+                    drawScanline: false,
+                    showPattern: false
+                }
+            }, function(err) {
+                if (err) {
+                    console.error(err);
+                    showMessage("No se pudo iniciar el escáner. Use la opción manual.", true);
+                    scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+                    scannerBtn.disabled = false;
+                    return;
+                }
                 
-                const button = e.target.classList.contains('eliminar-producto') ? 
-                    e.target : e.target.closest('.eliminar-producto');
-                
-                button.closest('.producto-seleccionado').remove();
-            }
-        });
-        
-        // Validación antes de enviar
-        document.getElementById('despacho-form').addEventListener('submit', function(e) {
-            const productosSeleccionados = document.querySelectorAll('.producto-seleccionado');
-            if (productosSeleccionados.length === 0) {
-                alert('Debe agregar al menos un producto al despacho');
-                e.preventDefault();
-            }
-        });
+                Quagga.start();
+                scannerActive = true;
+                scannerPreview.style.display = 'block';
+                scannerBtn.innerHTML = '<i class="fas fa-stop"></i> Detener Escáner';
+                showMessage("Escáner listo. Apunte al código de barras");
+                scannerBtn.disabled = false;
+            });
+
+        } catch (error) {
+            console.error(error);
+            showMessage(error.message, true);
+            scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+            scannerBtn.disabled = false;
+            
+            // Enfocar el campo manual si falla la cámara
+            manualBarcode.focus();
+        }
     });
 
-    // Actualizar disponibilidad en tiempo real
-document.addEventListener('DOMContentLoaded', function() {
-    // Función para actualizar la disponibilidad
-    function actualizarDisponibilidad(inventarioId, cantidadInput) {
-        const cantidad = parseInt(cantidadInput.value) || 0;
-        fetch(`/api/inventario/${inventarioId}/disponibilidad/`)
-            .then(response => response.json())
-            .then(data => {
-                const disponibleElement = document.getElementById(`disponible-${inventarioId}`);
-                if (disponibleElement) {
-                    const disponible = data.disponible;
-                    disponibleElement.textContent = disponible;
-                    
-                    // Resaltar si no hay suficiente
-                    if (cantidad > disponible) {
-                        cantidadInput.classList.add('is-invalid');
-                    } else {
-                        cantidadInput.classList.remove('is-invalid');
-                    }
-                }
-            });
-    }
-    
-    // Escuchar cambios en las cantidades
-    document.querySelectorAll('input[name*="-cantidad"]').forEach(input => {
-        input.addEventListener('change', function() {
-            const inventarioId = this.name.split('-')[2];
-            actualizarDisponibilidad(inventarioId, this);
+    // Detección de códigos
+    Quagga.onDetected(function(result) {
+        const code = result.codeResult.code;
+        Quagga.stop();
+        scannerActive = false;
+        scannerPreview.style.display = 'none';
+        scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+        
+        processBarcode(code);
+    });
+
+    // Manejo de código manual
+    addManualBtn.addEventListener('click', function() {
+        const code = manualBarcode.value.trim();
+        if (code) {
+            processBarcode(code);
+            manualBarcode.value = '';
+        }
+    });
+
+    manualBarcode.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            addManualBtn.click();
+        }
+    });
+
+    // Selector de carga
+    document.getElementById('carga-select').addEventListener('change', function() {
+        document.querySelectorAll('.carga-productos').forEach(div => {
+            div.style.display = 'none';
         });
         
-        input.addEventListener('input', function() {
-            const inventarioId = this.name.split('-')[2];
-            actualizarDisponibilidad(inventarioId, this);
-        });
+        if (this.value) {
+            document.getElementById(`carga-${this.value}`).style.display = 'block';
+        }
     });
-    
-    // Actualizar todos al cargar
-    document.querySelectorAll('select[name*="-inventario"]').forEach(select => {
-        const inventarioId = select.value;
-        const cantidadInput = document.querySelector(`input[name="items-${select.name.split('-')[1]}-cantidad"]`);
-        if (inventarioId && cantidadInput) {
-            actualizarDisponibilidad(inventarioId, cantidadInput);
+
+    // Agregar producto manualmente
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('agregar-producto') || e.target.closest('.agregar-producto')) {
+            const button = e.target.classList.contains('agregar-producto') ? 
+                e.target : e.target.closest('.agregar-producto');
+            
+            const inventarioId = button.getAttribute('data-inventario-id');
+            const productoName = button.getAttribute('data-producto-name');
+            const cargaName = button.getAttribute('data-carga-name');
+            const disponible = button.getAttribute('data-disponible');
+            
+            addProduct(inventarioId, productoName, cargaName, disponible);
+        }
+        
+        // Eliminar producto
+        if (e.target.classList.contains('eliminar-producto') || e.target.closest('.eliminar-producto')) {
+            const button = e.target.classList.contains('eliminar-producto') ? 
+                e.target : e.target.closest('.eliminar-producto');
+            button.closest('.producto-seleccionado').remove();
+        }
+    });
+
+    // Validación antes de enviar
+    document.getElementById('despacho-form').addEventListener('submit', function(e) {
+        if (document.querySelectorAll('.producto-seleccionado').length === 0) {
+            e.preventDefault();
+            showMessage("Debe agregar al menos un producto al despacho", true);
         }
     });
 });
-    </script>
-    
-    {% endblock %}
+</script>
+{% endblock %}
+{% endblock %}
