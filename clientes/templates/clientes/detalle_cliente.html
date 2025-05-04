@@ -2,17 +2,23 @@
 
 {% block title %}{{cliente.nombre}}{% endblock %}
 
+{%  load auth_extras %}
 {% block content %}
 <main class="main-content">
     <header class="content__header content__header--flex">
         <h1 class="content__title">{{ cliente.nombre }}</h1>
         <div class="header__actions">
-            <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success btn--icon">
-                <i class="fas fa-box-open"></i> Registrar Carga
-            </a>
+            {%  if user|in_group:'admin' or user|in_group:'bodeguero' %}
+                <a href="{% url 'registrar_carga' cliente.id %}" class="btn btn--success btn--icon">
+                    <i class="fas fa-box-open"></i> Registrar Carga
+                </a>
+            {% endif %}
+
+            {%  if user|in_group:'admin'%}
             <a href="{% url 'crear_despacho' cliente.nombre %}" class="btn btn--success btn--icon">
                 <i class="fas fa-truck"></i> Crear Despacho
             </a>
+            {% endif %}
             <a href="{% url 'clientes' %}" class="btn btn--primary btn--icon">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>

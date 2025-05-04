@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load auth_extras %}
 {% load static %}
 {% block title %}Despachos{% endblock %}
 {% block content %}
@@ -122,7 +122,9 @@
                                 <th>Fecha</th>
                                 <th>Cliente</th>
                                 <th>Estado</th>
-                                <th>Valor Flete</th>
+                                {% if user|in_group:'admin' %}
+                                    <th>Valor Flete</th>
+                                {% endif %}
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -142,7 +144,9 @@
                                         {{ despacho.get_estado_display }}
                                     </span>
                                 </td>
-                                <td data-label="Valor Flete">${{ despacho.valor_flete|floatformat:2 }}</td>
+                                {% if user|in_group:'admin' %}
+                                    <td data-label="Valor Flete">${{ despacho.valor_flete|floatformat:2 }}</td>
+                                {% endif %}
                                 <td data-label="Acciones">
                                     <div class="actions-group">
                                         <a href="{% url 'detalle_despacho' despacho.pk %}" 

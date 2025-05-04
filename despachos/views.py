@@ -62,11 +62,15 @@ def lista_despachos(request, cliente_nombre=None):
 
 def detalle_despacho(request, pk):
     despacho = get_object_or_404(Despacho, pk=pk)
-    items = despacho.items.all()  # Esto usa el related_name='items' del ForeignKey
+    items = despacho.items.all().annotate(
+        total_item=F('cantidad')*F('valor_unitario')) 
     
+    total_despacho = items.aggregate(total=Sum('total_item'))['total'] or 0
+        
     context = {
         'despacho': despacho,
-        'items': items
+        'items': items,
+        'total_despacho': total_despacho
     }
     return render(request, 'despachos/detalle_despacho.html', context)
 
@@ -74,7 +78,6 @@ def detalle_despacho(request, pk):
 def crear_despacho(request, cliente_nombre):
     cliente = get_object_or_404(Cliente, nombre=cliente_nombre)
     
-    # Consulta optimizada para cargas con inventario disponible
     cargas_con_inventario = Carga.objects.filter(
         cliente=cliente
     ).prefetch_related(
@@ -107,22 +110,25 @@ def crear_despacho(request, cliente_nombre):
                             prefix = key.split('-')[1]
                             inventario_id = value
                             cantidad = request.POST.get(f'items-{prefix}-cantidad', '0')
+                            valor_unitario = request.POST.get(f'items-{prefix}-valor_unitario', '0')
                             
                             if inventario_id and cantidad.isdigit():
                                 cantidad = int(cantidad)
+                                valor_unitario = float(valor_unitario) if valor_unitario.replace('.', '', 1).isdigit() else 0 
                                 if cantidad > 0:
-                                    items_data.append((inventario_id, cantidad))
+                                    items_data.append((inventario_id, cantidad, valor_unitario))
                     
                     if not items_data:
                         raise ValueError('Debe agregar al menos un producto')
                     
                     # Crear items si todo está bien
-                    for inventario_id, cantidad in items_data:
+                    for inventario_id, cantidad, valor_unitario in items_data:
                         inventario = InventarioCarga.objects.get(id=inventario_id)
                         ItemDespacho.objects.create(
                             despacho=despacho,
                             inventario=inventario,
-                            cantidad=cantidad
+                            cantidad=cantidad,
+                            valor_unitario=valor_unitario
                         )
                     
                     messages.success(request, 'Despacho creado exitosamente!')
@@ -142,6 +148,7 @@ def crear_despacho(request, cliente_nombre):
         'cargas_con_inventario': cargas_con_inventario
     }
     return render(request, 'despachos/crear_despacho.html', context)
+
 
 def cambiar_estado_despacho(request, pk, nuevo_estado):
     """Cambia el estado de un despacho"""

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load auth_extras %}
 {% load static %}
 {% block title %}Detalle de Despacho {{ despacho.guia }}{% endblock %}
 {% block content %}
@@ -54,10 +54,12 @@
                         <i class="fas fa-info-circle"></i> Información del Despacho
                     </h3>
                     <div class="detail-grid">
-                        <div class="detail-group">
-                            <span class="detail-label">Valor del Flete:</span>
-                            <p class="detail-value">${{ despacho.valor_flete|floatformat:2 }}</p>
-                        </div>
+                        {% if user|in_group:'admin' %}
+                            <div class="detail-group">
+                                <span class="detail-label">Valor del Flete:</span>
+                                <p class="detail-value">${{ despacho.valor_flete|floatformat:2 }}</p>
+                            </div>
+                        {% endif %}
                         <div class="detail-group">
                             <span class="detail-label">Guía:</span>
                             <p class="detail-value">{{ despacho.guia }}</p>
@@ -141,6 +143,8 @@
                             <tr>
                                 <th>Producto</th>
                                 <th>Cantidad</th>
+                                <th>Valor Unitario</th>
+                                <th>Valor Total</th>
                                 <th>Carga de Origen</th>
                                 <th>Remisión</th>
                             </tr>
@@ -150,6 +154,8 @@
                             <tr>
                                 <td>{{ item.inventario.producto.nombre }}</td>
                                 <td>{{ item.cantidad }}</td>
+                                <td>{{ item.valor_unitario|floatformat:2 }}</td>
+                                <td>{{ item.total_item|floatformat:2 }}</td>
                                 <td>{{ item.inventario.carga.nombre }}</td>
                                 <td>{{ item.inventario.carga.remision }}</td>
                             </tr>

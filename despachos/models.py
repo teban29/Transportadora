@@ -27,6 +27,9 @@ class Despacho(models.Model):
     estado = models.CharField(max_length=20, choices=ESTADOS, default='BODEGA')
     valor_flete = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     observaciones = models.TextField(blank=True, null=True)
+    placa_camion = models.CharField(max_length=20, default='')
+    nombre_conductor = models.CharField(max_length=50, blank=True, null=True, default='')
+    
     
     def __str__(self):
         return f"Despacho {self.guia} - {self.cliente.nombre}"
@@ -49,11 +52,17 @@ class ItemDespacho(models.Model):
     despacho = models.ForeignKey(Despacho, on_delete=models.CASCADE, related_name='items')
     inventario = models.ForeignKey(InventarioCarga, on_delete=models.CASCADE, related_name='items_despacho')
     cantidad = models.PositiveIntegerField()
+    valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default=0)
     
     def clean(self):
         """Validación adicional antes de guardar"""
         super().clean()
         self.inventario.verificar_disponibilidad(self.cantidad)
+    
+    @property
+    def valor_total(self):
+        """Devuelve el valor total del item despacho"""
+        return self.cantidad * self.valor_unitario
     
     def save(self, *args, **kwargs):
         """Sobrescribimos save para incluir validación"""

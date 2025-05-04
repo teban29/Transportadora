@@ -83,10 +83,6 @@
                     <span class="detail-label">Fecha:</span>
                     <p class="detail-value">{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</p>
                 </div>
-                <div class="detail-group">
-                    <span class="detail-label">Valor Flete:</span>
-                    <p class="detail-value">${{ despacho.valor_flete|floatformat:2 }}</p>
-                </div>
                 {% if despacho.observaciones %}
                 <div class="detail-group detail-group--full">
                     <span class="detail-label">Observaciones:</span>
