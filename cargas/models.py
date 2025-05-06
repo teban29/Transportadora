@@ -4,6 +4,8 @@ from clientes.models import Cliente
 from proveedores.models import Proveedor
 from django.db.models import Sum, F
 from django.db.models.functions import Coalesce
+from django.core.exceptions import ValidationError
+
 
 # Create your models here.
 
@@ -53,18 +55,38 @@ class InventarioCarga(models.Model):
             total=Sum('cantidad')
         )['total'] or 0
         return max(0, self.cantidad - total_despachado)
-
-    def verificar_disponibilidad(self, cantidad):
-        """Verifica disponibilidad sin modificar el inventario"""
+    
+    def verificar_disponibilidad(self, cantidad, despacho_actual=None):
+        """Verifica disponibilidad considerando un despacho existente"""
         try:
             cantidad = int(cantidad)
             if cantidad <= 0:
-                raise ValueError("La cantidad debe ser mayor a cero")
+                raise ValidationError("La cantidad debe ser mayor a cero")
             
-            disponible = self.cantidad_disponible
+            # Si estamos editando un despacho existente
+            if despacho_actual:
+                # Obtenemos la cantidad ya asignada a este despacho
+                cantidad_actual = self.items_despacho.filter(
+                    despacho=despacho_actual
+                ).aggregate(
+                    total=Sum('cantidad')
+                )['total'] or 0
+                
+                # La nueva cantidad disponible es:
+                # (cantidad total) - (despachado en otros despachos) + (ya asignado a este despacho)
+                disponible = (self.cantidad - 
+                            (self.items_despacho.exclude(despacho=despacho_actual)
+                             .aggregate(total=Sum('cantidad'))['total'] or 0) + 
+                            cantidad_actual)
+            else:
+                # Para nuevo despacho, disponible es simplemente cantidad total - despachado
+                disponible = self.cantidad_disponible
+            
             if cantidad > disponible:
-                raise ValueError(f"No hay suficiente stock (Disponible: {disponible})")
+                raise ValidationError(
+                    f"No hay suficiente stock. Disponible: {disponible}"
+                )
             return True
                 
         except (TypeError, ValueError) as e:
-            raise ValueError(f"Cantidad inválida: {str(e)}")
+            raise ValidationError(f"Cantidad inválida: {str(e)}")

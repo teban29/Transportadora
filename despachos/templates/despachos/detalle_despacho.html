@@ -37,6 +37,9 @@
                 </a>
                 {% endif %}
             {% endif %}
+            <a href="{% url 'editar_despacho' despacho.pk %}" class="btn btn--primary btn--icon">
+                <i class="fas fa-edit"></i> Editar
+            </a>
             <a href="{% url 'lista_despachos_cliente' despacho.cliente.nombre %}" class="btn btn--primary btn--icon">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
@@ -71,6 +74,10 @@
                         <div class="detail-group">
                             <span class="detail-label">Fecha de Creación:</span>
                             <p class="detail-value">{{ despacho.fecha_creacion|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div class="detail-group">
+                            <span class="detail-label">Placa de Camión:</span>
+                            <p class="detail-value">{{ despacho.placa_camion }}</p>
                         </div>
                         {% if despacho.observaciones %}
                         <div class="detail-group detail-group--full">

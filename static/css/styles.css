@@ -502,6 +502,7 @@
 .card__title-link {
     text-decoration: none;
     color: inherit;
+    padding: 5px;
 }
 
 .card__title {
@@ -1012,7 +1013,6 @@
 /* Grid de productos */
 .product-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 1.5rem;
 }
 

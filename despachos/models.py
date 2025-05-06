@@ -3,7 +3,8 @@ from cargas.models import InventarioCarga
 from clientes.models import Cliente
 import random
 import string
-from django.db.models import F
+from django.db.models import F, Sum
+from django.core.exceptions import ValidationError
 
 # Create your models here.
 
@@ -57,7 +58,15 @@ class ItemDespacho(models.Model):
     def clean(self):
         """Validación adicional antes de guardar"""
         super().clean()
-        self.inventario.verificar_disponibilidad(self.cantidad)
+        
+        if not self.pk or (self.pk and self.inventario_id != ItemDespacho.objects.get(pk=self.pk).inventario_id):
+            self.inventario.verificar_disponibilidad(self.cantidad)
+            
+        else:
+            original = ItemDespacho.objects.get(pk=self.pk)
+            diferencia = self.cantidad - original.cantidad
+            if diferencia > 0:
+                self.inventario.verificar_disponibilidad(diferencia)
     
     @property
     def valor_total(self):
@@ -65,10 +74,38 @@ class ItemDespacho(models.Model):
         return self.cantidad * self.valor_unitario
     
     def save(self, *args, **kwargs):
-        """Sobrescribimos save para incluir validación"""
-        self.clean()
-        super().save(*args, **kwargs)
+            """Sobrescribimos save para incluir validación"""
+            # Primero validamos
+            self.clean()
+            
+            # Si es una actualización, necesitamos manejar el cambio de cantidades
+            if self.pk:
+                original = ItemDespacho.objects.get(pk=self.pk)
+                # Si cambió el inventario, debemos "devolver" la cantidad original
+                if original.inventario_id != self.inventario_id:
+                    original.inventario.cantidad += original.cantidad
+                    original.inventario.save()
+                    # Y restar del nuevo inventario
+                    self.inventario.cantidad -= self.cantidad
+                    self.inventario.save()
+                # Si solo cambió la cantidad
+                elif original.cantidad != self.cantidad:
+                    diferencia = self.cantidad - original.cantidad
+                    self.inventario.cantidad -= diferencia
+                    self.inventario.save()
+            else:
+                # Para items nuevos, simplemente restamos del inventario
+                self.inventario.cantidad -= self.cantidad
+                self.inventario.save()
+            
+            super().save(*args, **kwargs)
     
+    def delete(self, *args, **kwargs):
+        """Al eliminar un item, devolvemos la cantidad al inventario"""
+        self.inventario.cantidad += self.cantidad
+        self.inventario.save()
+        super().delete(*args, **kwargs)
+        
     def __str__(self):
         return f"{self.cantidad} x {self.inventario.producto.nombre} para {self.despacho.guia}"
     

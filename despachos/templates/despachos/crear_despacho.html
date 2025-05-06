@@ -182,283 +182,311 @@
 <script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/webrtc-adapter@7.7.0/adapter.min.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Variables globales
-    const scannerBtn = document.getElementById('start-scanner');
-    const scannerPreview = document.getElementById('scanner-preview');
-    const scannerResult = document.getElementById('scanner-result');
-    const manualBarcode = document.getElementById('manual-barcode');
-    const addManualBtn = document.getElementById('add-manual');
-    let scannerActive = false;
-    let productIndex = document.querySelectorAll('.producto-seleccionado').length;
-
-    // Función para mostrar mensajes
-    function showMessage(message, isError = false) {
-        scannerResult.innerHTML = `
-            <div class="${isError ? 'alert-danger' : 'alert-success'}">
-                <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
-                ${message}
-            </div>
-        `;
-        setTimeout(() => scannerResult.innerHTML = '', 3000);
-    }
-
-    // Función para formatear moneda
-    function formatCurrency(amount) {
-        return '$' + parseFloat(amount).toFixed(2);
-    }
-
-    // Función para calcular total
-    function calculateTotal(input) {
-        const container = input.closest('.producto-seleccionado');
-        const cantidad = parseFloat(container.querySelector('.cantidad-input').value) || 0;
-        const valor = parseFloat(container.querySelector('.valor-input').value) || 0;
-        const total = cantidad * valor;
-        container.querySelector('.total-item').textContent = formatCurrency(total);
-    }
-
-    // Función para verificar soporte de cámara
-    async function checkCameraAccess() {
-        try {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                throw new Error('Tu navegador no soporta acceso a la cámara');
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+        // Variables globales
+        const scannerBtn = document.getElementById('start-scanner');
+        const scannerPreview = document.getElementById('scanner-preview');
+        const scannerResult = document.getElementById('scanner-result');
+        const manualBarcode = document.getElementById('manual-barcode');
+        const addManualBtn = document.getElementById('add-manual');
+        let scannerActive = false;
+        let productIndex = document.querySelectorAll('.producto-seleccionado').length;
+    
+        // Función para mostrar mensajes
+        function showMessage(message, isError = false) {
+            scannerResult.innerHTML = `
+                <div class="${isError ? 'alert-danger' : 'alert-success'}">
+                    <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                    ${message}
+                </div>
+            `;
+            setTimeout(() => scannerResult.innerHTML = '', 3000);
+        }
+    
+        // Función para formatear moneda
+        function formatCurrency(amount) {
+            return amount ? '$' + parseFloat(amount).toFixed(2) : '-';
+        }
+    
+        // Función para calcular total (modificada para manejar valores vacíos)
+        function calculateTotal(input) {
+            const container = input.closest('.producto-seleccionado');
+            const cantidad = parseFloat(container.querySelector('.cantidad-input').value) || 0;
+            const valorInput = container.querySelector('.valor-input');
+            const valor = valorInput.value === '' ? 0 : parseFloat(valorInput.value) || 0;
+            const totalElement = container.querySelector('.total-item');
             
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            stream.getTracks().forEach(track => track.stop());
-            return true;
-        } catch (error) {
-            console.error('Error en cámara:', error);
-            if (error.name === 'NotAllowedError') {
-                throw new Error('Permiso de cámara denegado. Por favor habilítalo manualmente.');
-            } else if (error.name === 'NotFoundError') {
-                throw new Error('No se encontró cámara disponible');
+            if (valor > 0) {
+                const total = cantidad * valor;
+                totalElement.textContent = formatCurrency(total);
+                totalElement.title = "Total: " + formatCurrency(total);
+                totalElement.classList.remove('text-muted');
             } else {
-                throw new Error('No se puede acceder a la cámara: ' + error.message);
+                totalElement.textContent = '-';
+                totalElement.title = "Precio unitario no especificado";
+                totalElement.classList.add('text-muted');
             }
         }
-    }
-
-    // Función para agregar producto
-    function addProduct(inventarioId, productoName, cargaName, disponible) {
-        // Verificar si ya existe
-        const existingInput = document.querySelector(`input[name*="-inventario"][value="${inventarioId}"]`);
-        if (existingInput) {
-            const cantidadInput = existingInput.closest('.producto-seleccionado').querySelector('.cantidad-input');
-            const newValue = parseInt(cantidadInput.value) + 1;
-            cantidadInput.value = Math.min(newValue, disponible);
-            calculateTotal(cantidadInput);
-            showMessage(`Cantidad aumentada para ${productoName}`);
-            return;
-        }
-
-        // Crear nuevo elemento
-        const productHTML = `
-            <div class="producto-seleccionado" data-index="${productIndex}">
-                <div class="info">
-                    <strong>${productoName}</strong>
-                    <small>Carga: ${cargaName} | Disponible: ${disponible}</small>
-                </div>
-                <div class="input-group">
-                    <input type="number" name="items-${productIndex}-cantidad" 
-                           class="form-control cantidad-input" min="1" max="${disponible}" 
-                           value="1" required>
-                </div>
-                <div class="input-group">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">$</span>
-                    </div>
-                    <input type="number" step="0.01" name="items-${productIndex}-valor_unitario" 
-                           class="form-control valor-input" value="0" required>
-                </div>
-                <div class="total-item">$0.00</div>
-                <input type="hidden" name="items-${productIndex}-inventario" value="${inventarioId}">
-                <button type="button" class="btn btn--danger btn--sm eliminar-producto">
-                    <i class="fas fa-trash"></i>
-                </button>
-            </div>
-        `;
-        
-        document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productHTML);
-        
-        // Agregar event listeners a los nuevos inputs
-        const newProduct = document.querySelector(`.producto-seleccionado[data-index="${productIndex}"]`);
-        newProduct.querySelector('.cantidad-input').addEventListener('input', function() {
-            calculateTotal(this);
-        });
-        newProduct.querySelector('.valor-input').addEventListener('input', function() {
-            calculateTotal(this);
-        });
-        
-        productIndex++;
-        showMessage(`Producto ${productoName} agregado`);
-    }
-
-    // Función para procesar código escaneado
-    async function processBarcode(code) {
-        try {
-            showMessage("Procesando código...");
-            
-            const response = await fetch(`/despachos/${encodeURIComponent('{{ cliente.nombre }}')}/escanear/`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({ codigo: code })
-            });
-            
-            const data = await response.json();
-            
-            if (data.error) {
-                throw new Error(data.error);
-            }
-            
-            addProduct(data.inventario_id, data.producto, data.carga, data.disponible);
-            
-        } catch (error) {
-            console.error("Error:", error);
-            showMessage(error.message, true);
-        }
-    }
-
-    // Control del escáner
-    scannerBtn.addEventListener('click', async function() {
-        if (scannerActive) {
-            Quagga.stop();
-            scannerPreview.style.display = 'none';
-            scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-            scannerActive = false;
-            return;
-        }
-
-        scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-        scannerBtn.disabled = true;
-
-        try {
-            // Verificar acceso a cámara primero
-            await checkCameraAccess();
-            
-            scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
-            
-            Quagga.init({
-                inputStream: {
-                    name: "Live",
-                    type: "LiveStream",
-                    target: scannerPreview,
-                    constraints: {
-                        width: { min: 640, ideal: 1280, max: 1920 },
-                        height: { min: 480, ideal: 720, max: 1080 },
-                        facingMode: "environment"
-                    },
-                },
-                decoder: {
-                    readers: ["code_128_reader"]
-                },
-                locate: true,
-                numOfWorkers: navigator.hardwareConcurrency || 4,
-                debug: {
-                    drawBoundingBox: false,
-                    showFrequency: false,
-                    drawScanline: false,
-                    showPattern: false
-                }
-            }, function(err) {
-                if (err) {
-                    console.error(err);
-                    showMessage("No se pudo iniciar el escáner. Use la opción manual.", true);
-                    scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-                    scannerBtn.disabled = false;
-                    return;
+    
+        // Función para verificar soporte de cámara
+        async function checkCameraAccess() {
+            try {
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Tu navegador no soporta acceso a la cámara');
                 }
                 
-                Quagga.start();
-                scannerActive = true;
-                scannerPreview.style.display = 'block';
-                scannerBtn.innerHTML = '<i class="fas fa-stop"></i> Detener Escáner';
-                showMessage("Escáner listo. Apunte al código de barras");
-                scannerBtn.disabled = false;
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                return true;
+            } catch (error) {
+                console.error('Error en cámara:', error);
+                if (error.name === 'NotAllowedError') {
+                    throw new Error('Permiso de cámara denegado. Por favor habilítalo manualmente.');
+                } else if (error.name === 'NotFoundError') {
+                    throw new Error('No se encontró cámara disponible');
+                } else {
+                    throw new Error('No se puede acceder a la cámara: ' + error.message);
+                }
+            }
+        }
+    
+        // Función para agregar producto (modificada para hacer precio opcional)
+        function addProduct(inventarioId, productoName, cargaName, disponible) {
+            // Verificar si ya existe
+            const existingInput = document.querySelector(`input[name*="-inventario"][value="${inventarioId}"]`);
+            if (existingInput) {
+                const cantidadInput = existingInput.closest('.producto-seleccionado').querySelector('.cantidad-input');
+                const newValue = parseInt(cantidadInput.value) + 1;
+                cantidadInput.value = Math.min(newValue, disponible);
+                calculateTotal(cantidadInput);
+                showMessage(`Cantidad aumentada para ${productoName}`);
+                return;
+            }
+    
+            // Crear nuevo elemento con precio unitario opcional
+            const productHTML = `
+                <div class="producto-seleccionado" data-index="${productIndex}">
+                    <div class="info">
+                        <strong>${productoName}</strong>
+                        <small>Carga: ${cargaName} | Disponible: ${disponible}</small>
+                    </div>
+                    <div class="input-group">
+                        <input type="number" name="items-${productIndex}-cantidad" 
+                               class="form-control cantidad-input" min="1" max="${disponible}" 
+                               value="1" required>
+                    </div>
+                    <div class="input-group">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text">$</span>
+                        </div>
+                        <input type="number" step="0.01" name="items-${productIndex}-valor_unitario" 
+                               class="form-control valor-input" value="" placeholder="Opcional">
+                    </div>
+                    <div class="total-item text-muted" title="Precio unitario no especificado">-</div>
+                    <input type="hidden" name="items-${productIndex}-inventario" value="${inventarioId}">
+                    <button type="button" class="btn btn--danger btn--sm eliminar-producto">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productHTML);
+            
+            // Agregar event listeners a los nuevos inputs
+            const newProduct = document.querySelector(`.producto-seleccionado[data-index="${productIndex}"]`);
+            newProduct.querySelector('.cantidad-input').addEventListener('input', function() {
+                calculateTotal(this);
             });
-
-        } catch (error) {
-            console.error(error);
-            showMessage(error.message, true);
-            scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-            scannerBtn.disabled = false;
+            newProduct.querySelector('.valor-input').addEventListener('input', function() {
+                calculateTotal(this);
+            });
             
-            // Enfocar el campo manual si falla la cámara
-            manualBarcode.focus();
+            productIndex++;
+            showMessage(`Producto ${productoName} agregado`);
         }
-    });
-
-    // Detección de códigos
-    Quagga.onDetected(function(result) {
-        const code = result.codeResult.code;
-        Quagga.stop();
-        scannerActive = false;
-        scannerPreview.style.display = 'none';
-        scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-        
-        processBarcode(code);
-    });
-
-    // Manejo de código manual
-    addManualBtn.addEventListener('click', function() {
-        const code = manualBarcode.value.trim();
-        if (code) {
-            processBarcode(code);
-            manualBarcode.value = '';
+    
+        // Función para procesar código escaneado
+        async function processBarcode(code) {
+            try {
+                showMessage("Procesando código...");
+                
+                const response = await fetch(`/despachos/${encodeURIComponent('{{ cliente.nombre }}')}/escanear/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({ codigo: code })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                addProduct(data.inventario_id, data.producto, data.carga, data.disponible);
+                
+            } catch (error) {
+                console.error("Error:", error);
+                showMessage(error.message, true);
+            }
         }
-    });
-
-    manualBarcode.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            addManualBtn.click();
-        }
-    });
-
-    // Selector de carga
-    document.getElementById('carga-select').addEventListener('change', function() {
-        document.querySelectorAll('.carga-productos').forEach(div => {
-            div.style.display = 'none';
+    
+        // Control del escáner
+        scannerBtn.addEventListener('click', async function() {
+            if (scannerActive) {
+                Quagga.stop();
+                scannerPreview.style.display = 'none';
+                scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+                scannerActive = false;
+                return;
+            }
+    
+            scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
+            scannerBtn.disabled = true;
+    
+            try {
+                // Verificar acceso a cámara primero
+                await checkCameraAccess();
+                
+                scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
+                
+                Quagga.init({
+                    inputStream: {
+                        name: "Live",
+                        type: "LiveStream",
+                        target: scannerPreview,
+                        constraints: {
+                            width: { min: 640, ideal: 1280, max: 1920 },
+                            height: { min: 480, ideal: 720, max: 1080 },
+                            facingMode: "environment"
+                        },
+                    },
+                    decoder: {
+                        readers: ["code_128_reader"]
+                    },
+                    locate: true,
+                    numOfWorkers: navigator.hardwareConcurrency || 4,
+                    debug: {
+                        drawBoundingBox: false,
+                        showFrequency: false,
+                        drawScanline: false,
+                        showPattern: false
+                    }
+                }, function(err) {
+                    if (err) {
+                        console.error(err);
+                        showMessage("No se pudo iniciar el escáner. Use la opción manual.", true);
+                        scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+                        scannerBtn.disabled = false;
+                        return;
+                    }
+                    
+                    Quagga.start();
+                    scannerActive = true;
+                    scannerPreview.style.display = 'block';
+                    scannerBtn.innerHTML = '<i class="fas fa-stop"></i> Detener Escáner';
+                    showMessage("Escáner listo. Apunte al código de barras");
+                    scannerBtn.disabled = false;
+                });
+    
+            } catch (error) {
+                console.error(error);
+                showMessage(error.message, true);
+                scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
+                scannerBtn.disabled = false;
+                
+                // Enfocar el campo manual si falla la cámara
+                manualBarcode.focus();
+            }
         });
-        
-        if (this.value) {
-            document.getElementById(`carga-${this.value}`).style.display = 'block';
-        }
-    });
-
-    // Agregar producto manualmente
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('agregar-producto') || e.target.closest('.agregar-producto')) {
-            const button = e.target.classList.contains('agregar-producto') ? 
-                e.target : e.target.closest('.agregar-producto');
+    
+        // Detección de códigos
+        Quagga.onDetected(function(result) {
+            const code = result.codeResult.code;
+            Quagga.stop();
+            scannerActive = false;
+            scannerPreview.style.display = 'none';
+            scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
             
-            const inventarioId = button.getAttribute('data-inventario-id');
-            const productoName = button.getAttribute('data-producto-name');
-            const cargaName = button.getAttribute('data-carga-name');
-            const disponible = button.getAttribute('data-disponible');
+            processBarcode(code);
+        });
+    
+        // Manejo de código manual
+        addManualBtn.addEventListener('click', function() {
+            const code = manualBarcode.value.trim();
+            if (code) {
+                processBarcode(code);
+                manualBarcode.value = '';
+            }
+        });
+    
+        manualBarcode.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addManualBtn.click();
+            }
+        });
+    
+        // Selector de carga
+        document.getElementById('carga-select').addEventListener('change', function() {
+            document.querySelectorAll('.carga-productos').forEach(div => {
+                div.style.display = 'none';
+            });
             
-            addProduct(inventarioId, productoName, cargaName, disponible);
-        }
-        
-        // Eliminar producto
-        if (e.target.classList.contains('eliminar-producto') || e.target.closest('.eliminar-producto')) {
-            const button = e.target.classList.contains('eliminar-producto') ? 
-                e.target : e.target.closest('.eliminar-producto');
-            button.closest('.producto-seleccionado').remove();
-        }
+            if (this.value) {
+                document.getElementById(`carga-${this.value}`).style.display = 'block';
+            }
+        });
+    
+        // Agregar producto manualmente
+        document.addEventListener('click', function(e) {
+            if (e.target.classList.contains('agregar-producto') || e.target.closest('.agregar-producto')) {
+                const button = e.target.classList.contains('agregar-producto') ? 
+                    e.target : e.target.closest('.agregar-producto');
+                
+                const inventarioId = button.getAttribute('data-inventario-id');
+                const productoName = button.getAttribute('data-producto-name');
+                const cargaName = button.getAttribute('data-carga-name');
+                const disponible = button.getAttribute('data-disponible');
+                
+                addProduct(inventarioId, productoName, cargaName, disponible);
+            }
+            
+            // Eliminar producto
+            if (e.target.classList.contains('eliminar-producto') || e.target.closest('.eliminar-producto')) {
+                const button = e.target.classList.contains('eliminar-producto') ? 
+                    e.target : e.target.closest('.eliminar-producto');
+                button.closest('.producto-seleccionado').remove();
+            }
+        });
+    
+        // Validación antes de enviar (modificada para no requerir precios)
+        document.getElementById('despacho-form').addEventListener('submit', function(e) {
+            if (document.querySelectorAll('.producto-seleccionado').length === 0) {
+                e.preventDefault();
+                showMessage("Debe agregar al menos un producto al despacho", true);
+            }
+            
+            // Verificar que todas las cantidades sean válidas
+            let valid = true;
+            document.querySelectorAll('.cantidad-input').forEach(input => {
+                const value = parseFloat(input.value);
+                if (isNaN(value) || value < 1) {
+                    input.classList.add('is-invalid');
+                    valid = false;
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+                showMessage("Por favor ingrese cantidades válidas para todos los productos", true);
+            }
+        });
     });
-
-    // Validación antes de enviar
-    document.getElementById('despacho-form').addEventListener('submit', function(e) {
-        if (document.querySelectorAll('.producto-seleccionado').length === 0) {
-            e.preventDefault();
-            showMessage("Debe agregar al menos un producto al despacho", true);
-        }
-    });
-});
-</script>
+    </script>
 
 <style>
     .producto-seleccionado {
