@@ -17,6 +17,7 @@ from datetime import datetime
 from django.utils import timezone
 from django.db.models import F, Sum
 from django.db.models.functions import Coalesce
+from django.http import JsonResponse
 
 logger = logging.getLogger(__name__)
 
@@ -185,18 +186,17 @@ def generar_codigo_barras_producto(request, inventario_id):
     
     try:
         if not inventario.codigo_barras:
-            messages.info(request, "Generando nuevo codigo de barras...")
+            messages.info(request, "Generando nuevo código de barras...")
         
         pdf_buffer = generar_codigo_barras_unico(inventario)
-        response = HttpResponse(pdf_buffer.getvalue(),content_type='aplication/pdf')
-        filename = f"CODIGO_{inventario.producto.nombre}_{inventario.carga.nombre}.pdf"
-        response['Content-Disposition']= f'inline; filename="{filename}"'
+        response = HttpResponse(pdf_buffer.getvalue(), content_type='application/pdf')
+        filename = f"CODIGO_{inventario.producto.nombre}_{inventario.carga.nombre}.pdf".replace(" ", "_")
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         return response
     
     except Exception as e:
-        messages.error(request, f"Error enerando codigo: {str(e)}")
+        messages.error(request, f"Error generando código: {str(e)}")
         return redirect('detalle_carga', carga_id=inventario.carga.id)
-
 
 @require_GET
 def verificar_inventario_disponible(request):
@@ -216,5 +216,5 @@ def verificar_inventario_disponible(request):
         })
     
     
-from django.http import JsonResponse
+
 
