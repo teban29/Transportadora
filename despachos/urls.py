@@ -11,7 +11,7 @@ urlpatterns = [
     path('<int:pk>/cambiar-estado/<str:nuevo_estado>/', views.cambiar_estado_despacho, name='cambiar_estado_despacho'),
     
     #escaneo de códigos de barras
-    path('<str:cliente_nombre>/escanear/', views.escanear_codigo_barras, name='escanear_codigo_barras'),
+    path('<str:cliente_nombre>/escanear/', views.validar_codigo_barras, name='validar_codigo'),
     
     #URLS para seguimiento de despachos
     path('seguimiento/', views.seguimiento_despacho, name='seguimiento-despacho'),

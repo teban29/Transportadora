@@ -179,17 +179,11 @@
 </main>
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/quagga@0.12.1/dist/quagga.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/webrtc-adapter@7.7.0/adapter.min.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Variables globales
-        const scannerBtn = document.getElementById('start-scanner');
-        const scannerPreview = document.getElementById('scanner-preview');
         const scannerResult = document.getElementById('scanner-result');
         const manualBarcode = document.getElementById('manual-barcode');
         const addManualBtn = document.getElementById('add-manual');
-        let scannerActive = false;
         let productIndex = document.querySelectorAll('.producto-seleccionado').length;
     
         // Función para mostrar mensajes
@@ -208,7 +202,7 @@
             return amount ? '$' + parseFloat(amount).toFixed(2) : '-';
         }
     
-        // Función para calcular total (modificada para manejar valores vacíos)
+        // Función para calcular total
         function calculateTotal(input) {
             const container = input.closest('.producto-seleccionado');
             const cantidad = parseFloat(container.querySelector('.cantidad-input').value) || 0;
@@ -228,29 +222,7 @@
             }
         }
     
-        // Función para verificar soporte de cámara
-        async function checkCameraAccess() {
-            try {
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                    throw new Error('Tu navegador no soporta acceso a la cámara');
-                }
-                
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                stream.getTracks().forEach(track => track.stop());
-                return true;
-            } catch (error) {
-                console.error('Error en cámara:', error);
-                if (error.name === 'NotAllowedError') {
-                    throw new Error('Permiso de cámara denegado. Por favor habilítalo manualmente.');
-                } else if (error.name === 'NotFoundError') {
-                    throw new Error('No se encontró cámara disponible');
-                } else {
-                    throw new Error('No se puede acceder a la cámara: ' + error.message);
-                }
-            }
-        }
-    
-        // Función para agregar producto (modificada para hacer precio opcional)
+        // Función para agregar producto
         function addProduct(inventarioId, productoName, cargaName, disponible) {
             // Verificar si ya existe
             const existingInput = document.querySelector(`input[name*="-inventario"][value="${inventarioId}"]`);
@@ -263,7 +235,7 @@
                 return;
             }
     
-            // Crear nuevo elemento con precio unitario opcional
+            // Crear nuevo elemento
             const productHTML = `
                 <div class="producto-seleccionado" data-index="${productIndex}">
                     <div class="info">
@@ -292,7 +264,7 @@
             
             document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productHTML);
             
-            // Agregar event listeners a los nuevos inputs
+            // Agregar event listeners
             const newProduct = document.querySelector(`.producto-seleccionado[data-index="${productIndex}"]`);
             newProduct.querySelector('.cantidad-input').addEventListener('input', function() {
                 calculateTotal(this);
@@ -305,11 +277,16 @@
             showMessage(`Producto ${productoName} agregado`);
         }
     
-        // Función para procesar código escaneado
+        // Función para procesar código escaneado (MEJORADA)
         async function processBarcode(code) {
             try {
-                showMessage("Procesando código...");
+                code = code.trim();
+                console.log("Procesando código:", code);
                 
+                if (!code) {
+                    throw new Error("No se recibió ningún código");
+                }
+    
                 const response = await fetch(`/despachos/${encodeURIComponent('{{ cliente.nombre }}')}/escanear/`, {
                     method: 'POST',
                     headers: {
@@ -320,111 +297,51 @@
                 });
                 
                 const data = await response.json();
+                console.log("Respuesta del servidor:", data);
                 
-                if (data.error) {
-                    throw new Error(data.error);
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Error al validar el código');
                 }
                 
                 addProduct(data.inventario_id, data.producto, data.carga, data.disponible);
                 
             } catch (error) {
-                console.error("Error:", error);
+                console.error("Error en processBarcode:", {
+                    error: error.message,
+                    stack: error.stack
+                });
                 showMessage(error.message, true);
+                manualBarcode.focus();
             }
         }
     
-        // Control del escáner
-        scannerBtn.addEventListener('click', async function() {
-            if (scannerActive) {
-                Quagga.stop();
-                scannerPreview.style.display = 'none';
-                scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-                scannerActive = false;
+        // Manejo de código manual (MEJORADO)
+        function handleManualBarcode() {
+            const code = manualBarcode.value.trim();
+            
+            if (!code) {
+                showMessage("Por favor ingrese un código de barras", true);
                 return;
             }
-    
-            scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verificando...';
-            scannerBtn.disabled = true;
-    
-            try {
-                // Verificar acceso a cámara primero
-                await checkCameraAccess();
-                
-                scannerBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...';
-                
-                Quagga.init({
-                    inputStream: {
-                        name: "Live",
-                        type: "LiveStream",
-                        target: scannerPreview,
-                        constraints: {
-                            width: { min: 640, ideal: 1280, max: 1920 },
-                            height: { min: 480, ideal: 720, max: 1080 },
-                            facingMode: "environment"
-                        },
-                    },
-                    decoder: {
-                        readers: ["code_128_reader"]
-                    },
-                    locate: true,
-                    numOfWorkers: navigator.hardwareConcurrency || 4,
-                    debug: {
-                        drawBoundingBox: false,
-                        showFrequency: false,
-                        drawScanline: false,
-                        showPattern: false
-                    }
-                }, function(err) {
-                    if (err) {
-                        console.error(err);
-                        showMessage("No se pudo iniciar el escáner. Use la opción manual.", true);
-                        scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-                        scannerBtn.disabled = false;
-                        return;
-                    }
-                    
-                    Quagga.start();
-                    scannerActive = true;
-                    scannerPreview.style.display = 'block';
-                    scannerBtn.innerHTML = '<i class="fas fa-stop"></i> Detener Escáner';
-                    showMessage("Escáner listo. Apunte al código de barras");
-                    scannerBtn.disabled = false;
-                });
-    
-            } catch (error) {
-                console.error(error);
-                showMessage(error.message, true);
-                scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
-                scannerBtn.disabled = false;
-                
-                // Enfocar el campo manual si falla la cámara
-                manualBarcode.focus();
+            
+            // Verificar formato básico antes de enviar
+            if (code.split('-').length !== 4) {
+                showMessage("Formato incorrecto. Debe ser: cliente-producto-carga-remisión", true);
+                return;
             }
-        });
-    
-        // Detección de códigos
-        Quagga.onDetected(function(result) {
-            const code = result.codeResult.code;
-            Quagga.stop();
-            scannerActive = false;
-            scannerPreview.style.display = 'none';
-            scannerBtn.innerHTML = '<i class="fas fa-camera"></i> Activar Escáner';
             
             processBarcode(code);
-        });
+            manualBarcode.value = '';
+            manualBarcode.focus();
+        }
     
-        // Manejo de código manual
-        addManualBtn.addEventListener('click', function() {
-            const code = manualBarcode.value.trim();
-            if (code) {
-                processBarcode(code);
-                manualBarcode.value = '';
-            }
-        });
-    
+        // Event Listeners
+        addManualBtn.addEventListener('click', handleManualBarcode);
+        
         manualBarcode.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                addManualBtn.click();
+                e.preventDefault();
+                handleManualBarcode();
             }
         });
     
@@ -461,14 +378,13 @@
             }
         });
     
-        // Validación antes de enviar (modificada para no requerir precios)
+        // Validación antes de enviar
         document.getElementById('despacho-form').addEventListener('submit', function(e) {
             if (document.querySelectorAll('.producto-seleccionado').length === 0) {
                 e.preventDefault();
                 showMessage("Debe agregar al menos un producto al despacho", true);
             }
             
-            // Verificar que todas las cantidades sean válidas
             let valid = true;
             document.querySelectorAll('.cantidad-input').forEach(input => {
                 const value = parseFloat(input.value);
@@ -485,9 +401,11 @@
                 showMessage("Por favor ingrese cantidades válidas para todos los productos", true);
             }
         });
+    
+        // Enfocar automáticamente el campo de código
+        manualBarcode.focus();
     });
     </script>
-
 <style>
     .producto-seleccionado {
         display: grid;

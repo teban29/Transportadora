@@ -13,6 +13,8 @@ from django.urls import reverse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
+from django.views.decorators.http import require_POST
+
 
 
 
@@ -352,3 +354,83 @@ def editar_despacho(request, pk):
         'items_actuales': despacho.items.select_related('inventario', 'inventario__producto').all()
     }
     return render(request, 'despachos/editar_despacho.html', context)
+
+
+@require_POST
+def validar_codigo_barras(request, cliente_nombre):
+    cliente = get_object_or_404(Cliente, nombre=cliente_nombre)
+    
+    try:
+        data = json.loads(request.body)
+        codigo = data.get('codigo', '').strip()
+        
+        # Debug en consola del servidor
+        print(f"Código recibido para validación: {codigo}")
+        
+        # Validación básica
+        if not codigo:
+            return JsonResponse({'error': 'No se recibió ningún código'}, status=400)
+        
+        # Parsear el código (formato: cliente_id-producto_id-carga_id-remisión)
+        partes = codigo.split('-')
+        if len(partes) != 4:
+            return JsonResponse({
+                'error': f'Formato inválido. Se esperaba: cliente_id-producto_id-carga_id-remisión. Recibido: {codigo}'
+            }, status=400)
+            
+        cliente_id, producto_id, carga_id, remision = partes
+        
+        # Verificar que pertenece al cliente actual
+        if int(cliente_id) != cliente.id:
+            return JsonResponse({
+                'error': f'El producto no pertenece al cliente actual. Cliente en código: {cliente_id}, Cliente actual: {cliente.id}'
+            }, status=400)
+        
+        # Buscar el inventario
+        try:
+            inventario = InventarioCarga.objects.select_related(
+                'producto', 'carga'
+            ).get(
+                carga__cliente=cliente,
+                producto_id=producto_id,
+                carga_id=carga_id,
+                carga__remision=remision,
+                codigo_barras=codigo
+            )
+        except InventarioCarga.DoesNotExist:
+            # Intentar buscar sin el código de barras exacto (por si hay problemas de formato)
+            inventario = InventarioCarga.objects.select_related(
+                'producto', 'carga'
+            ).filter(
+                carga__cliente=cliente,
+                producto_id=producto_id,
+                carga_id=carga_id,
+                carga__remision=remision
+            ).first()
+            
+            if not inventario:
+                return JsonResponse({
+                    'error': 'Producto no encontrado en el inventario del cliente',
+                    'detalle': {
+                        'cliente_id': cliente_id,
+                        'producto_id': producto_id,
+                        'carga_id': carga_id,
+                        'remision': remision
+                    }
+                }, status=404)
+        
+        return JsonResponse({
+            'inventario_id': inventario.id,
+            'producto': inventario.producto.nombre,
+            'carga': inventario.carga.nombre,
+            'disponible': inventario.cantidad_disponible,
+            'codigo_validado': codigo
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Error en el formato de la solicitud'}, status=400)
+    except Exception as e:
+        return JsonResponse({
+            'error': f'Error inesperado: {str(e)}',
+            'tipo': type(e).__name__
+        }, status=500)
