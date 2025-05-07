@@ -50,7 +50,7 @@ class InventarioCarga(models.Model):
     
     @property
     def cantidad_disponible(self):
-        """Calcula dinámicamente la cantidad disponible"""
+        """Calcula dinámicamente la cantidad disponible (sin contar el despacho actual)"""
         total_despachado = self.items_despacho.aggregate(
             total=Sum('cantidad')
         )['total'] or 0
@@ -63,29 +63,34 @@ class InventarioCarga(models.Model):
             if cantidad <= 0:
                 raise ValidationError("La cantidad debe ser mayor a cero")
             
-            # Si estamos editando un despacho existente
             if despacho_actual:
-                # Obtenemos la cantidad ya asignada a este despacho
+                # Cantidad ya asignada a ESTE despacho
                 cantidad_actual = self.items_despacho.filter(
                     despacho=despacho_actual
                 ).aggregate(
                     total=Sum('cantidad')
                 )['total'] or 0
                 
-                # La nueva cantidad disponible es:
-                # (cantidad total) - (despachado en otros despachos) + (ya asignado a este despacho)
-                disponible = (self.cantidad - 
-                            (self.items_despacho.exclude(despacho=despacho_actual)
-                             .aggregate(total=Sum('cantidad'))['total'] or 0) + 
-                            cantidad_actual)
+                # Cantidad asignada a OTROS despachos
+                cantidad_otros = self.items_despacho.exclude(
+                    despacho=despacho_actual
+                ).aggregate(
+                    total=Sum('cantidad')
+                )['total'] or 0
+                
+                disponible = self.cantidad - cantidad_otros
+                
+                # Podemos usar lo ya asignado a este despacho + lo disponible
+                if cantidad > (disponible + cantidad_actual):
+                    raise ValidationError(
+                        f"No hay suficiente stock. Disponible: {disponible} (incluyendo {cantidad_actual} ya asignados)"
+                    )
             else:
-                # Para nuevo despacho, disponible es simplemente cantidad total - despachado
+                # Para nuevo despacho
                 disponible = self.cantidad_disponible
+                if cantidad > disponible:
+                    raise ValidationError(f"No hay suficiente stock. Disponible: {disponible}")
             
-            if cantidad > disponible:
-                raise ValidationError(
-                    f"No hay suficiente stock. Disponible: {disponible}"
-                )
             return True
                 
         except (TypeError, ValueError) as e:

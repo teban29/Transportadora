@@ -284,30 +284,32 @@ def editar_despacho(request, pk):
                     for item_data in items_data:
                         inventario = InventarioCarga.objects.get(id=item_data['inventario_id'])
                         if item_data['id']:
-                            # Item existente - verificar disponibilidad
                             item = ItemDespacho.objects.get(id=item_data['id'])
-                            diferencia = item_data['cantidad'] - item.cantidad
-                            if diferencia > 0:
-                                inventario.verificar_disponibilidad(diferencia, despacho)
+                            # Verificar el cambio neto
+                            if item.inventario_id == int(item_data['inventario_id']):
+                                diferencia = item_data['cantidad'] - item.cantidad
+                                if diferencia > 0:
+                                    inventario.verificar_disponibilidad(diferencia, despacho)
+                            else:
+                                # Cambió de inventario - validar todo
+                                inventario.verificar_disponibilidad(item_data['cantidad'], despacho)
                         else:
-                            # Nuevo item - verificar disponibilidad completa
                             inventario.verificar_disponibilidad(item_data['cantidad'], despacho)
                     
-                    # Si todas las validaciones pasan, proceder con los cambios
+                    # Procesar cambios
                     for item_data in items_data:
                         inventario = InventarioCarga.objects.get(id=item_data['inventario_id'])
                         
                         if item_data['id']:
-                            # Item existente - actualizar
                             item = ItemDespacho.objects.get(id=item_data['id'])
                             items_a_eliminar.remove(item)
                             
                             # Actualizar el item
                             item.cantidad = item_data['cantidad']
                             item.valor_unitario = item_data['valor_unitario']
+                            item.inventario = inventario
                             item.save()
                         else:
-                            # Nuevo item - crear
                             ItemDespacho.objects.create(
                                 despacho=despacho,
                                 inventario=inventario,
@@ -315,7 +317,7 @@ def editar_despacho(request, pk):
                                 valor_unitario=item_data['valor_unitario']
                             )
                     
-                    # Eliminar items que ya no están en el formulario
+                    # Eliminar items que ya no están
                     for item in items_a_eliminar:
                         item.delete()
                     
@@ -324,32 +326,29 @@ def editar_despacho(request, pk):
             
             except Exception as e:
                 messages.error(request, f'Error al actualizar despacho: {str(e)}')
-    else:
-        despacho_form = DespachoForm(instance=despacho)
     
-    # Obtener cargas con inventario disponible o que ya están en este despacho
+    # Obtener cargas con inventario disponible o ya en este despacho
     cargas_con_inventario = Carga.objects.filter(
         cliente=cliente
     ).prefetch_related(
         Prefetch('inventario', 
             queryset=InventarioCarga.objects.annotate(
-                disponible_total=F('cantidad') - Coalesce(
-                    Sum('items_despacho__cantidad', filter=~Q(items_despacho__despacho=despacho)),
-                    0
+                disponible=Coalesce(
+                    F('cantidad') - Sum('items_despacho__cantidad', 
+                    filter=~Q(items_despacho__despacho=despacho)),
+                    F('cantidad')
                 )
             ).filter(
-                Q(disponible_total__gt=0) | Q(items_despacho__despacho=despacho)
-            ).select_related('producto').distinct()
+                Q(disponible__gt=0) | Q(items_despacho__despacho=despacho)
+            ).distinct()
         )
-    ).order_by('-fecha').distinct()
-    
-    items_actuales = despacho.items.select_related('inventario', 'inventario__producto').all()
+    ).distinct()
     
     context = {
-        'despacho_form': despacho_form,
+        'despacho_form': DespachoForm(instance=despacho),
         'despacho': despacho,
         'cliente': cliente,
         'cargas_con_inventario': cargas_con_inventario,
-        'items_actuales': items_actuales
+        'items_actuales': despacho.items.select_related('inventario', 'inventario__producto').all()
     }
     return render(request, 'despachos/editar_despacho.html', context)

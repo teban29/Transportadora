@@ -189,39 +189,94 @@
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Variables globales
         let productIndex = document.querySelectorAll('.producto-seleccionado').length;
         const despachoId = "{{ despacho.pk }}";
-        
+        const itemsOriginales = {}; // Almacenará las cantidades originales por inventario
+    
+        // Inicializar itemsOriginales con los valores actuales
+        document.querySelectorAll('.producto-seleccionado').forEach(item => {
+            const inventarioId = item.querySelector('input[name*="-inventario"]').value;
+            const cantidad = parseInt(item.querySelector('.cantidad-input').value) || 0;
+            itemsOriginales[inventarioId] = cantidad;
+        });
+    
+        // Función para formatear moneda
+        function formatCurrency(amount) {
+            return amount ? '$' + parseFloat(amount).toFixed(2) : '$0.00';
+        }
+    
         // Función para calcular total
         function calculateTotal(input) {
             const container = input.closest('.producto-seleccionado');
+            if (!container) return;
+            
             const cantidad = parseFloat(container.querySelector('.cantidad-input').value) || 0;
             const valor = parseFloat(container.querySelector('.valor-input').value) || 0;
             const total = cantidad * valor;
-            container.querySelector('.total-item').textContent = '$' + total.toFixed(2);
+            container.querySelector('.total-item').textContent = formatCurrency(total);
         }
-        
+    
+        // Función para actualizar la información de disponibilidad
+        function updateAvailableInfo(container) {
+            if (!container) return;
+            
+            const inventarioId = container.querySelector('input[name*="-inventario"]').value;
+            const cantidadInput = container.querySelector('.cantidad-input');
+            const infoElement = container.querySelector('.info small');
+            
+            // Obtener el botón de agregar para este inventario
+            const addButton = document.querySelector(`.agregar-producto[data-inventario-id="${inventarioId}"]`);
+            if (!addButton) return;
+            
+            const disponibleBodega = parseInt(addButton.getAttribute('data-disponible')) || 0;
+            const cantidadAsignada = parseInt(cantidadInput.value) || 0;
+            const cantidadOriginal = itemsOriginales[inventarioId] || 0;
+            
+            // Calcular máximo permitido (disponible en bodega + lo ya asignado)
+            const maxPermitido = disponibleBodega + cantidadOriginal;
+            
+            // Actualizar atributos del input
+            cantidadInput.setAttribute('max', maxPermitido);
+            
+            // Actualizar texto informativo
+            infoElement.innerHTML = `
+                Carga: ${addButton.getAttribute('data-carga-name')} | 
+                Disponible en bodega: ${disponibleBodega} | 
+                Ya asignado en despacho: ${cantidadOriginal} |
+                Máximo a asignar: ${maxPermitido}
+            `;
+        }
+    
         // Selector de carga
         document.getElementById('carga-select').addEventListener('change', function() {
             document.querySelectorAll('.carga-productos').forEach(div => {
                 div.style.display = 'none';
             });
+            
             if (this.value) {
                 document.getElementById(`carga-${this.value}`).style.display = 'block';
             }
         });
-        
+    
         // Función para agregar producto
         function addProduct(inventarioId, productoName, cargaName, disponible) {
             // Verificar si ya existe
             const existingInput = document.querySelector(`input[name*="-inventario"][value="${inventarioId}"]`);
             if (existingInput) {
                 const cantidadInput = existingInput.closest('.producto-seleccionado').querySelector('.cantidad-input');
-                cantidadInput.value = parseInt(cantidadInput.value) + 1;
+                const newValue = parseInt(cantidadInput.value) + 1;
+                
+                // Obtener máximo disponible (disponible en bodega + cantidad original)
+                const cantidadOriginal = itemsOriginales[inventarioId] || 0;
+                const maxDisponible = parseInt(disponible) + cantidadOriginal;
+                
+                cantidadInput.value = Math.min(newValue, maxDisponible);
                 calculateTotal(cantidadInput);
+                updateAvailableInfo(existingInput.closest('.producto-seleccionado'));
                 return;
             }
-            
+    
             // Crear nuevo elemento
             const productHTML = `
                 <div class="producto-seleccionado" data-index="${productIndex}">
@@ -229,12 +284,14 @@
                         <strong>${productoName}</strong>
                         <small>
                             Carga: ${cargaName} | 
-                            Disponible: ${disponible}
+                            Disponible en bodega: ${disponible} | 
+                            Ya asignado en despacho: 0 |
+                            Máximo a asignar: ${disponible}
                         </small>
                     </div>
                     <div class="input-group">
                         <input type="number" name="items-${productIndex}-cantidad" 
-                               class="form-control cantidad-input" min="1" 
+                               class="form-control cantidad-input" min="1" max="${disponible}" 
                                value="1" required>
                     </div>
                     <div class="input-group">
@@ -255,43 +312,97 @@
             
             document.getElementById('productos-seleccionados').insertAdjacentHTML('beforeend', productHTML);
             
-            // Agregar event listeners
+            // Agregar a itemsOriginales (0 porque es un nuevo item)
+            itemsOriginales[inventarioId] = 0;
+            
+            // Agregar event listeners a los nuevos inputs
             const newProduct = document.querySelector(`.producto-seleccionado[data-index="${productIndex}"]`);
-            newProduct.querySelector('.cantidad-input').addEventListener('input', function() {
+            const cantidadInput = newProduct.querySelector('.cantidad-input');
+            
+            cantidadInput.addEventListener('input', function() {
                 calculateTotal(this);
+                updateAvailableInfo(this.closest('.producto-seleccionado'));
             });
+            
             newProduct.querySelector('.valor-input').addEventListener('input', function() {
                 calculateTotal(this);
             });
             
             productIndex++;
         }
-        
-        // Event listeners
+    
+        // Agregar producto manualmente
         document.addEventListener('click', function(e) {
             if (e.target.classList.contains('agregar-producto') || e.target.closest('.agregar-producto')) {
                 const button = e.target.classList.contains('agregar-producto') ? 
                     e.target : e.target.closest('.agregar-producto');
-                addProduct(
-                    button.getAttribute('data-inventario-id'),
-                    button.getAttribute('data-producto-name'),
-                    button.getAttribute('data-carga-name'),
-                    button.getAttribute('data-disponible')
-                );
+                
+                const inventarioId = button.getAttribute('data-inventario-id');
+                const productoName = button.getAttribute('data-producto-name');
+                const cargaName = button.getAttribute('data-carga-name');
+                const disponible = button.getAttribute('data-disponible');
+                
+                addProduct(inventarioId, productoName, cargaName, disponible);
             }
             
+            // Eliminar producto
             if (e.target.classList.contains('eliminar-producto') || e.target.closest('.eliminar-producto')) {
                 const button = e.target.classList.contains('eliminar-producto') ? 
                     e.target : e.target.closest('.eliminar-producto');
+                
+                // Eliminar de itemsOriginales si existe
+                const inventarioId = button.closest('.producto-seleccionado').querySelector('input[name*="-inventario"]').value;
+                delete itemsOriginales[inventarioId];
+                
                 button.closest('.producto-seleccionado').remove();
             }
         });
-        
-        // Inicializar
+    
+        // Event listeners para inputs existentes
         document.querySelectorAll('.cantidad-input, .valor-input').forEach(input => {
             input.addEventListener('input', function() {
                 calculateTotal(this);
             });
+            
+            // Para inputs de cantidad existentes, actualizar la información de disponibilidad
+            if (input.classList.contains('cantidad-input')) {
+                input.addEventListener('change', function() {
+                    updateAvailableInfo(this.closest('.producto-seleccionado'));
+                });
+            }
+        });
+    
+        // Validación antes de enviar
+        document.getElementById('despacho-form').addEventListener('submit', function(e) {
+            if (document.querySelectorAll('.producto-seleccionado').length === 0) {
+                e.preventDefault();
+                alert("Debe agregar al menos un producto al despacho");
+                return;
+            }
+            
+            // Validar que no haya cantidades superiores al máximo permitido
+            let valid = true;
+            document.querySelectorAll('.cantidad-input').forEach(input => {
+                const max = parseInt(input.getAttribute('max')) || 0;
+                const value = parseInt(input.value) || 0;
+                
+                if (value > max) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                    alert(`La cantidad para ${input.closest('.producto-seleccionado').querySelector('.info strong').textContent} no puede ser mayor a ${max}`);
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!valid) {
+                e.preventDefault();
+            }
+        });
+        
+        // Inicializar información de disponibilidad para items existentes
+        document.querySelectorAll('.producto-seleccionado').forEach(item => {
+            updateAvailableInfo(item);
         });
     });
 </script>
