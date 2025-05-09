@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
-
+{% load auth_extras %}
 {% block title %}Clientes - Logística{% endblock %}
 {% load static %}
 {% block content %}
-{% load auth_extras %}
 <main class="main-content">
     <header class="content__header content__header--flex">
         <h1 class="content__title">Clientes</h1>
-        {% if user.is_staff %}
+        {% if user|in_group:'admin' %}
             <a href="{% url 'crear_cliente' %}" class="btn btn--success btn--icon">
                 <i class="fas fa-plus"></i> Crear Cliente
             </a>
@@ -28,7 +27,7 @@
                             <p class="card__text"><strong>Ciudad:</strong> {{ cliente.ciudad }}</p>
                             <p class="card__text"><strong>Teléfono:</strong> {{ cliente.telefono }}</p>
                             <p class="card__text"><strong>Email:</strong> {{ cliente.email }}</p>
-                            {% if user.is_staff %}
+                            {% if user|in_group:'admin' %}
                                 <div class="card__actions">
                                     <a href="{% url 'editar_cliente' cliente.id %}" class="btn btn--primary btn--sm">
                                         <i class="fas fa-edit"></i> Editar

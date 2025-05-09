@@ -63,7 +63,7 @@
                         <li class="sidebar__item"><a href="{% url 'lista_despachos' %}" class="sidebar__link">Gestión de Despachos</a></li>
                     {% endif %}
 
-                    {% if user.is_staff %}
+                    {% if user|in_group:'admin' %}
                         <li class="sidebar__item"><a href="{% url 'user_list' %}" class="sidebar__link">Usuarios</a></li>
                     {% endif %}
                 </ul>

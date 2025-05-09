@@ -167,11 +167,13 @@
                                             <i class="fas fa-check-circle"></i>
                                         </a>
                                         {% endif %}
-                                        <a href="{% url 'editar_despacho' despacho.pk %}" 
-                                           class="btn btn--primary btn--sm" 
-                                           title="Editar despacho">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
+                                        {% if user|in_group:'admin' %}
+                                            <a href="{% url 'editar_despacho' despacho.pk %}" 
+                                            class="btn btn--primary btn--sm" 
+                                            title="Editar despacho">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>

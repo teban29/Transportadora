@@ -40,9 +40,11 @@
                 </a>
                 {% endif %}
             {% endif %}
-            <a href="{% url 'editar_despacho' despacho.pk %}" class="btn btn--primary btn--icon">
-                <i class="fas fa-edit"></i> Editar
-            </a>
+            {% if user|in_group:'admin' %}
+                <a href="{% url 'editar_despacho' despacho.pk %}" class="btn btn--primary btn--icon">
+                    <i class="fas fa-edit"></i> Editar
+                </a>
+            {% endif %}
             <a href="{% url 'lista_despachos_cliente' despacho.cliente.nombre %}" class="btn btn--primary btn--icon">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>

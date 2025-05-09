@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{%  load auth_extras %}
 
 {% block title %}{{ proveedor.nombre }} - Detalles{% endblock %}
 
@@ -12,7 +13,7 @@
             <a href="{% url 'proveedores' %}" class="btn btn--primary btn--icon">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
-            {% if user.is_staff %}
+            {% if user|in_group:'admin' %}
                 <a href="{% url 'editar_proveedor' proveedor.nombre %}" class="btn btn--success btn--icon">
                     <i class="fas fa-edit"></i> Editar
                 </a>

@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{%  load auth_extras %}
 {% block title %}Proveedores - Logística{% endblock %}
 {% load static %}
 {% block content %}
@@ -8,7 +8,7 @@
         <h1 class="content__title">
             <i class="fas fa-truck"></i> Proveedores
         </h1>
-        {% if user.is_staff %}
+        {% if user|in_group:'admin' %}
             <a href="{% url 'crear_proveedor' %}" class="btn btn--success btn--icon">
                 <i class="fas fa-plus"></i> Crear Proveedor
             </a>
@@ -36,7 +36,7 @@
                                 </p>
                                 {% endif %}
                             </div>
-                            {% if user.is_staff %}
+                            {% if user|in_group:'admin' %}
                                 <div class="card__actions">
                                     <a href="{% url 'editar_proveedor' proveedor.nombre %}" class="btn btn--primary btn--sm btn--icon">
                                         <i class="fas fa-edit"></i> Editar
@@ -56,7 +56,7 @@
             <div class="empty-state">
                 <i class="empty-state__icon fas fa-truck"></i>
                 <p class="empty-state__message">No hay proveedores registrados.</p>
-                {% if user.is_staff %}
+                {% if user|in_group:'admin' %}
                     <a href="{% url 'crear_proveedor' %}" class="btn btn--success btn--icon">
                         <i class="fas fa-plus"></i> Registrar primer proveedor
                     </a>
