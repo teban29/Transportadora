@@ -21,7 +21,10 @@ urlpatterns = [
     
     #URLS para seguimiento de despachos
     path('seguimiento/', views.seguimiento_despacho, name='seguimiento-despacho'),
-    path('seguimiento/<str:guia>/', views.detalle_seguimiento, name='detalle-seguimiento'),\
+    path('seguimiento/<str:guia>/', views.detalle_seguimiento, name='detalle-seguimiento'),
     
+    # Generar comprobante de entrega
+    path('despachos/<int:despacho_id>/comprobante/', views.generar_comprobante_entrega, name='generar_comprobante_entrega'),    
+    path('despachos/<int:despacho_id>/cuenta-cobro/', views.generar_cuenta_cobro, name='generar_cuenta_cobro'),
 
 ]

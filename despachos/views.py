@@ -14,6 +14,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 from django.views.decorators.http import require_POST
+from django.http import HttpResponse
+from .pdf_utils import generate_despacho_pdf, generate_cuenta_cobro_pdf
 
 
 
@@ -517,3 +519,28 @@ def diagnosticar_despacho(request, despacho_id):
         'cliente': despacho.cliente.nombre,
         'items': items_data
     })
+    
+
+def generar_comprobante_entrega(request, despacho_id):
+    despacho = get_object_or_404(Despacho, pk=despacho_id)
+    
+    # Generar el PDF
+    pdf_buffer = generate_despacho_pdf(despacho)
+    
+    # Crear la respuesta HTTP con el PDF
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="comprobante_entrega_{despacho.guia}.pdf"'
+    
+    return response
+
+def generar_cuenta_cobro(request, despacho_id):
+    despacho = get_object_or_404(Despacho, pk=despacho_id)
+    
+    # Generar el PDF
+    pdf_buffer = generate_cuenta_cobro_pdf(despacho)
+    
+    # Crear la respuesta HTTP con el PDF
+    response = HttpResponse(pdf_buffer, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="cuenta_cobro_{despacho.guia}.pdf"'
+    
+    return response
