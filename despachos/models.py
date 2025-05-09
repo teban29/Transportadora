@@ -30,6 +30,7 @@ class Despacho(models.Model):
     observaciones = models.TextField(blank=True, null=True)
     placa_camion = models.CharField(max_length=20, default='')
     nombre_conductor = models.CharField(max_length=50, blank=True, null=True, default='')
+    escaneo_completado = models.BooleanField(default=False)
     
     
     def __str__(self):
@@ -54,6 +55,12 @@ class ItemDespacho(models.Model):
     inventario = models.ForeignKey(InventarioCarga, on_delete=models.CASCADE, related_name='items_despacho')
     cantidad = models.PositiveIntegerField()
     valor_unitario = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, default=0)
+    escaneado = models.BooleanField(default=False)
+    cantidad_escaneada = models.PositiveIntegerField(default=0)
+    
+    @property
+    def completado(self):
+        return self.cantidad_escaneada >= self.cantidad
     
     def clean(self):
         """Validación adicional antes de guardar"""

@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="card">
+    <div class="card__header">
+        <h2>Entrega de Despacho: {{ despacho.guia }}</h2>
+        <p class="text-muted">Cliente: {{ despacho.cliente.nombre }}</p>
+    </div>
+    
+    <div class="card__body">
+        <!-- Escáner -->
+        <div class="scanner-container mb-4">
+            <div class="input-group">
+                <input type="text" id="codigo-barras" class="form-control" 
+                       placeholder="Escanear código de barras" autofocus>
+                <button id="btn-escandear" class="btn btn--primary">
+                    <i class="fas fa-barcode"></i> Validar
+                </button>
+            </div>
+            <div id="escaneo-resultado" class="mt-2"></div>
+        </div>
+        
+        <!-- Resumen -->
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Escaneadas</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr data-item-id="{{ item.id }}" class="{% if item.escaneado %}table-success{% endif %}">
+                        <td>{{ item.inventario.producto.nombre }}</td>
+                        <td>{{ item.cantidad }}</td>
+                        <td class="contador-escaneo" data-item-id="{{ item.id }}">
+                            {{ item.cantidad_escaneada }}
+                        </td>
+                        <td class="estado-escaneo">
+                            {% if item.escaneado %}
+                                <span class="badge badge-success"><i class="fas fa-check"></i> COMPLETO</span>
+                            {% else %}
+                                <span class="badge badge-warning"><i class="fas fa-spinner"></i> PENDIENTE</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Botón de confirmación -->
+        <button id="btn-completar-entrega" class="btn btn--success btn--lg" style="display: {% if despacho.escaneo_completado %}block{% else %}none{% endif %};">
+            <i class="fas fa-check-circle"></i> Confirmar Entrega
+        </button>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const codigoInput = document.getElementById('codigo-barras');
+    const btnEscandear = document.getElementById('btn-escandear');
+    const resultadoDiv = document.getElementById('escaneo-resultado');
+    const btnCompletar = document.getElementById('btn-completar-entrega');
+    
+    function showMessage(message, isError = false) {
+        resultadoDiv.innerHTML = `
+            <div class="alert ${isError ? 'alert-danger' : 'alert-success'}">
+                <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
+                ${message}
+            </div>
+        `;
+        setTimeout(() => {
+            if (resultadoDiv.innerHTML.includes(message)) {
+                resultadoDiv.innerHTML = '';
+            }
+        }, 3000);
+    }
+    
+    function verificarEstadoEntrega() {
+        fetch(`{% url 'items_pendientes' despacho.id %}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.pendientes === 0) {
+                    btnCompletar.style.display = 'block';
+                    showMessage("¡Todos los productos han sido escaneados completamente!", false);
+                }
+            });
+    }
+    
+    btnEscandear.addEventListener('click', function() {
+        const codigo = codigoInput.value.trim();
+        if (!codigo) {
+            showMessage("Por favor ingrese un código de barras", true);
+            return;
+        }
+        
+        fetch(`{% url 'validar_escaneo_entrega' despacho.id %}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: JSON.stringify({ codigo: codigo })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => { throw err; });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.error) throw data;
+            
+            // Actualizar la interfaz
+            const fila = document.querySelector(`tr[data-item-id="${data.item_id}"]`);
+            if (fila) {
+                // Actualizar contador
+                fila.querySelector('.contador-escaneo').textContent = data.escaneadas;
+                
+                // Actualizar estado
+                const estado = fila.querySelector('.estado-escaneo');
+                if (data.completado) {
+                    estado.innerHTML = '<span class="badge badge-success"><i class="fas fa-check"></i> COMPLETO</span>';
+                    fila.classList.add('table-success');
+                } else {
+                    estado.innerHTML = '<span class="badge badge-warning"><i class="fas fa-spinner"></i> PENDIENTE</span>';
+                }
+            }
+            
+            showMessage(
+                `${data.producto}: ${data.escaneadas}/${data.total} unidades escaneadas`, 
+                false
+            );
+            
+            codigoInput.value = '';
+            verificarEstadoEntrega();
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            showMessage(error.error || "Error al validar el código", true);
+            codigoInput.select();
+        });
+    });
+    
+    // Permitir Enter para escanear
+    codigoInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            btnEscandear.click();
+        }
+    });
+    
+    // Confirmar entrega
+    btnCompletar.addEventListener('click', function() {
+        if (confirm("¿Confirmar que TODOS los productos fueron entregados correctamente?")) {
+            fetch(`{% url 'marcar_entregado' despacho.id %}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    window.location.href = data.redirect_url;
+                }
+            })
+            .catch(error => {
+                showMessage("Error al confirmar la entrega", true);
+            });
+        }
+    });
+});
+</script>
+
+<style>
+    .alert {
+        padding: 12px;
+        border-radius: 4px;
+        margin: 10px 0;
+        font-size: 14px;
+    }
+    .alert-success {
+        background-color: #d4edda;
+        color: #155724;
+        border-left: 4px solid #28a745;
+    }
+    .alert-danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-left: 4px solid #dc3545;
+    }
+    .table-success {
+        background-color: #e8f5e9 !important;
+        transition: background-color 0.3s ease;
+    }
+    .badge {
+        padding: 6px 10px;
+        border-radius: 12px;
+        font-size: 13px;
+        font-weight: 500;
+    }
+    .badge-success {
+        background-color: #28a745;
+    }
+    .badge-warning {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    .contador-escaneo {
+        font-weight: bold;
+        text-align: center;
+        font-size: 15px;
+    }
+    #codigo-barras {
+        font-size: 16px;
+        padding: 12px 15px;
+    }
+    #btn-escandear {
+        padding: 12px 20px;
+        font-size: 15px;
+    }
+    #btn-completar-entrega {
+        margin-top: 25px;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: 500;
+    }
+    .scanner-container {
+        max-width: 600px;
+        margin: 0 auto 25px;
+    }
+</style>
+{% endblock %}

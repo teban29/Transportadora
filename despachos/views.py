@@ -434,3 +434,86 @@ def validar_codigo_barras(request, cliente_nombre):
             'error': f'Error inesperado: {str(e)}',
             'tipo': type(e).__name__
         }, status=500)
+        
+        
+# Realizar entregas
+def realizar_entrega(request, despacho_id):
+    despacho = get_object_or_404(Despacho, pk=despacho_id)
+    items = despacho.items.all().select_related('inventario__producto')
+    
+    context = {
+        'despacho': despacho,
+        'items': items,
+    }
+    
+    return render(request, 'despachos/realizar_entrega.html', context)
+
+@csrf_exempt  # Temporalmente para pruebas
+@require_POST
+def validar_escaneo_entrega(request, despacho_id):
+    try:
+        data = json.loads(request.body)
+        codigo = data.get('codigo', '').strip()
+        despacho = get_object_or_404(Despacho, pk=despacho_id)
+
+        item = despacho.items.select_related('inventario').filter(
+            inventario__codigo_barras=codigo
+        ).first()
+
+        if not item:
+            return JsonResponse({'error': 'Producto no encontrado en este despacho'}, status=400)
+
+        # Incrementar solo si no está completo
+        if item.cantidad_escaneada < item.cantidad:
+            item.cantidad_escaneada += 1
+            item.escaneado = (item.cantidad_escaneada >= item.cantidad)
+            item.save()
+
+        return JsonResponse({
+            'success': True,
+            'producto': item.inventario.producto.nombre,
+            'escaneadas': item.cantidad_escaneada,
+            'total': item.cantidad,
+            'completado': item.escaneado,  # Usamos el campo escaneado que actualizamos
+            'item_id': item.id,
+            'restante': despacho.items.filter(escaneado=False).count()
+        })
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+    
+    
+def items_pendientes(request, despacho_id):
+    despacho = get_object_or_404(Despacho, pk=despacho_id)
+    pendientes = despacho.items.filter(escaneado=False).count()
+    return JsonResponse({'pendientes': pendientes})
+
+def marcar_entregado(request, despacho_id):
+    despacho = get_object_or_404(Despacho, pk=despacho_id)
+    despacho.estado = 'ENTREGADO'
+    despacho.escaneo_completado = True
+    despacho.save()
+    return JsonResponse({
+        'success': True,
+        'redirect_url': reverse('detalle_despacho', args=[despacho_id])
+    })
+    
+def diagnosticar_despacho(request, despacho_id):
+    despacho = get_object_or_404(Despacho, pk=despacho_id)
+    
+    items_data = []
+    for item in despacho.items.select_related('inventario__producto', 'inventario__carga'):
+        items_data.append({
+            'producto_id': item.inventario.producto.id,
+            'producto': item.inventario.producto.nombre,
+            'codigo_barras': item.inventario.codigo_barras,
+            'carga': item.inventario.carga.nombre,
+            'cantidad': item.cantidad,
+            'escaneado': item.escaneado
+        })
+    
+    return JsonResponse({
+        'despacho': despacho.guia,
+        'cliente': despacho.cliente.nombre,
+        'items': items_data
+    })
